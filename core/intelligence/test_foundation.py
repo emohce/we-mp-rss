@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 import tempfile
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.dialects import mysql, postgresql, sqlite
@@ -37,6 +39,7 @@ from .models import (
     WorkspaceArticle,
     WorkspaceMembership,
     WorkspaceSubscription,
+    WorkflowJob,
 )
 from .rate_limit import RateLimitPolicy, RateSignal, RateSnapshot, RateState, classify_provider_error
 from .settings import InfrastructureSettings, StorageProfile
@@ -72,6 +75,18 @@ class InfrastructureSettingsTest(unittest.TestCase):
         projection = str(settings.describe())
         self.assertNotIn("secret", projection)
         self.assertNotIn("secret-user", projection)
+
+    def test_runtime_config_is_used_only_when_environment_is_absent(self):
+        values = {
+            "storage.profile": "standard",
+            "db": "postgresql://config-user:secret@db/werss",
+            "redis.url": "redis://cache/0",
+        }
+        with patch.dict(os.environ, {}, clear=True):
+            settings = InfrastructureSettings.from_env(values.get)
+        self.assertEqual(settings.profile, StorageProfile.STANDARD)
+        self.assertEqual(settings.database_url, values["db"])
+        self.assertEqual(settings.redis_url, values["redis.url"])
 
 
 class LocalContentStoreTest(unittest.TestCase):
@@ -112,6 +127,7 @@ class DialectCompilationTest(unittest.TestCase):
             DigestItem.__table__,
             ShareLink.__table__,
             ExportJob.__table__,
+            WorkflowJob.__table__,
             DeliveryChannel.__table__,
             OutboxEvent.__table__,
         ]
@@ -140,7 +156,7 @@ class RateLimitPolicyTest(unittest.TestCase):
 
     def test_error_codes_are_not_conflated(self):
         self.assertEqual(classify_provider_error("200013"), RateSignal.RATE_LIMITED)
-        self.assertEqual(classify_provider_error("200003"), RateSignal.TRANSIENT_ERROR)
+        self.assertEqual(classify_provider_error("200003"), RateSignal.AUTH_INVALID)
         self.assertEqual(classify_provider_error(None, 401), RateSignal.AUTH_INVALID)
 
 
@@ -152,9 +168,11 @@ class JobRepositoryTest(unittest.TestCase):
             Workspace.__table__,
             WorkspaceMembership.__table__,
             WorkspaceArticle.__table__,
+            WorkspaceSubscription.__table__,
             CollectorAccount.__table__,
             CollectorCursor.__table__,
             CollectionJob.__table__,
+            WorkflowJob.__table__,
             OutboxEvent.__table__,
         ]
         Article.metadata.create_all(self.engine, tables=tables)

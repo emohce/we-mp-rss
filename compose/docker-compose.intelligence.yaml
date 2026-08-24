@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-werss}
+      POSTGRES_DB: ${POSTGRES_DB:-werss}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - intelligence_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-werss} -d ${POSTGRES_DB:-werss}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - intelligence_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto.intelligence.conf:/mosquitto/config/mosquitto.conf:ro
+      - intelligence_mqtt:/mosquitto/data
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h 127.0.0.1 -t '$$SYS/broker/version' -C 1 -W 3 >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  we-mp-rss:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      STORAGE_PROFILE: distributed
+      DB: postgresql://${POSTGRES_USER:-werss}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-werss}
+      REDIS_URL: redis://redis:6379/0
+      MQTT_URL: mqtt://mqtt:1883
+      MQTT_TOPIC_PREFIX: werss/v2
+      CONTENT_BACKEND: ${CONTENT_BACKEND:-local}
+      CONTENT_ROOT: /app/data/content
+      INTELLIGENCE_ENABLED: "true"
+      INTELLIGENCE_COLLECTOR_ENABLED: ${INTELLIGENCE_COLLECTOR_ENABLED:-false}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+    ports:
+      - "8001:8001"
+    volumes:
+      - intelligence_app_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+
+volumes:
+  intelligence_postgres:
+  intelligence_redis:
+  intelligence_mqtt:
+  intelligence_app_data:

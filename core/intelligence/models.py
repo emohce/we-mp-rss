@@ -85,7 +85,7 @@ class WorkspaceSubscription(Base):
         String(32), ForeignKey("int_workspaces.id", ondelete="CASCADE"), nullable=False
     )
     source_id = Column(String(255), nullable=False, index=True)
-    provider = Column(String(40), nullable=False, default="mp")
+    provider = Column(String(40), nullable=False, default="we-mp-rss")
     status = Column(String(24), nullable=False, default="active")
     discovery_mode = Column(String(24), nullable=False, default="latest_page")
     last_checked_at = Column(DateTime)
@@ -115,6 +115,7 @@ class UserArticleState(Base):
     is_read = Column(Boolean, nullable=False, default=False)
     is_favorite = Column(Boolean, nullable=False, default=False)
     is_hidden = Column(Boolean, nullable=False, default=False)
+    sentiment = Column(String(16), nullable=False, default="")
     relevance_override = Column(Float)
     read_progress = Column(Float, nullable=False, default=0.0)
     updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
@@ -226,10 +227,19 @@ class Topic(Base):
 class ArticleTopic(Base):
     __tablename__ = "int_article_topics"
     __table_args__ = (
-        UniqueConstraint("article_id", "topic_id", "analysis_version", name="uq_int_article_topic"),
+        UniqueConstraint(
+            "workspace_id",
+            "article_id",
+            "topic_id",
+            "analysis_version",
+            name="uq_int_article_topic_workspace",
+        ),
     )
 
     id = Column(String(32), primary_key=True, default=new_id)
+    workspace_id = Column(
+        String(32), ForeignKey("int_workspaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     article_id = Column(String(255), ForeignKey("articles.id", ondelete="CASCADE"), nullable=False)
     topic_id = Column(String(32), ForeignKey("int_topics.id", ondelete="CASCADE"), nullable=False)
     confidence = Column(Float, nullable=False, default=0.0)
@@ -376,6 +386,34 @@ class ExportJob(Base):
     completed_at = Column(DateTime)
 
 
+class WorkflowJob(Base):
+    __tablename__ = "int_workflow_jobs"
+    __table_args__ = (
+        UniqueConstraint("idempotency_key", name="uq_int_workflow_job_idempotency"),
+        Index("ix_int_workflow_job_claim", "state", "due_at", "priority"),
+    )
+
+    id = Column(String(32), primary_key=True, default=new_id)
+    workspace_id = Column(
+        String(32), ForeignKey("int_workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id = Column(String(255), nullable=False, default="", index=True)
+    kind = Column(String(40), nullable=False, index=True)
+    state = Column(String(24), nullable=False, default="queued", index=True)
+    payload = Column(JSON, nullable=False, default=dict)
+    idempotency_key = Column(String(180), nullable=False)
+    priority = Column(Integer, nullable=False, default=0)
+    attempts = Column(Integer, nullable=False, default=0)
+    max_attempts = Column(Integer, nullable=False, default=8)
+    due_at = Column(DateTime, nullable=False, default=utcnow)
+    lease_token = Column(String(64), nullable=False, default="")
+    lease_expires_at = Column(DateTime)
+    last_error = Column(String(500), nullable=False, default="")
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+    updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+    completed_at = Column(DateTime)
+
+
 class DeliveryChannel(Base):
     __tablename__ = "int_delivery_channels"
 
@@ -406,7 +444,10 @@ class OutboxEvent(Base):
     idempotency_key = Column(String(160), nullable=False)
     state = Column(String(24), nullable=False, default="pending")
     attempts = Column(Integer, nullable=False, default=0)
+    max_attempts = Column(Integer, nullable=False, default=12)
     available_at = Column(DateTime, nullable=False, default=utcnow)
+    lease_token = Column(String(64), nullable=False, default="")
+    lease_expires_at = Column(DateTime)
     last_error = Column(String(500), nullable=False, default="")
     created_at = Column(DateTime, nullable=False, default=utcnow)
     delivered_at = Column(DateTime)

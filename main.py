@@ -16,9 +16,15 @@ from driver.auth import start_auth_service
 import os
 
 if __name__ == '__main__':
-    print("环境变量:")
-    for k,v in os.environ.items():
-        print(f"{k}={v}")
+    from core.intelligence.settings import InfrastructureSettings
+
+    intelligence_settings = InfrastructureSettings.from_env(cfg.get).describe()
+    print(
+        "运行配置: "
+        f"TZ={os.environ.get('TZ', 'system')}, "
+        f"STORAGE_PROFILE={intelligence_settings['profile']}, "
+        f"CONTENT_BACKEND={intelligence_settings['content_backend']}"
+    )
     if cfg.args.init=="True":
         import init_sys as init
         init.init()
@@ -68,6 +74,13 @@ if __name__ == '__main__':
         print_success("已开启定时任务")
     else:
         print_warning("未开启定时任务")
+
+    if cfg.get("intelligence.enabled", False):
+        from jobs.intelligence import start_intelligence_jobs
+
+        start_intelligence_jobs()
+    else:
+        print_warning("智能聚合后台任务未启用")
     
     if cfg.get("gather.content_auto_check",False):
         from jobs import start_fix_article

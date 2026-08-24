@@ -33,6 +33,10 @@ from apis.filter_rule import router as filter_rule_router
 from apis.task_queue import router as task_queue_router
 from apis.proxy import router as proxy_router
 from apis.weread import router as weread_router
+from apis.intelligence import (
+    public_router as intelligence_public_router,
+    router as intelligence_router,
+)
 from views import router as views_router
 import apis
 import os
@@ -120,6 +124,8 @@ app.include_router(api_router)
 app.include_router(resource_router)
 app.include_router(feeds_router)
 app.include_router(views_router)
+app.include_router(intelligence_router, prefix="/api/v2/intelligence")
+app.include_router(intelligence_public_router, prefix="/share")
 
 # 静态文件服务配置
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")

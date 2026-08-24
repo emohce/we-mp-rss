@@ -70,6 +70,73 @@ class RedisCoordinator:
         except Exception:
             return False
 
+    def get_json(self, key: str) -> object | None:
+        try:
+            client = self._get_client()
+            if not client:
+                return None
+            raw = client.get(f"{self.namespace}:cache:{key}")
+            return json.loads(raw) if raw else None
+        except Exception:
+            return None
+
+    def set_json(self, key: str, value: object, ttl_seconds: int = 300) -> bool:
+        try:
+            client = self._get_client()
+            if not client:
+                return False
+            client.set(
+                f"{self.namespace}:cache:{key}",
+                json.dumps(value, ensure_ascii=False, separators=(",", ":"), default=str),
+                ex=max(1, ttl_seconds),
+            )
+            return True
+        except Exception:
+            return False
+
+    def consume_budget(
+        self,
+        name: str,
+        *,
+        capacity: int,
+        refill_per_second: float,
+        tokens: int = 1,
+    ) -> bool | None:
+        """Atomically consume a Redis token bucket, or return None on outage."""
+
+        if capacity < 1 or refill_per_second <= 0 or tokens < 1:
+            raise ValueError("invalid token bucket settings")
+        script = """
+        local current_time = redis.call('TIME')
+        local now = tonumber(current_time[1]) + tonumber(current_time[2]) / 1000000
+        local values = redis.call('HMGET', KEYS[1], 'tokens', 'updated')
+        local available = tonumber(values[1]) or tonumber(ARGV[1])
+        local updated = tonumber(values[2]) or now
+        available = math.min(tonumber(ARGV[1]), available + (now - updated) * tonumber(ARGV[2]))
+        local allowed = available >= tonumber(ARGV[3])
+        if allowed then available = available - tonumber(ARGV[3]) end
+        redis.call('HSET', KEYS[1], 'tokens', available, 'updated', now)
+        local ttl = math.ceil(tonumber(ARGV[1]) / tonumber(ARGV[2]) * 2)
+        redis.call('EXPIRE', KEYS[1], math.max(1, ttl))
+        return allowed and 1 or 0
+        """
+        try:
+            client = self._get_client()
+            if not client:
+                return None
+            return bool(
+                client.eval(
+                    script,
+                    1,
+                    f"{self.namespace}:budget:{name}",
+                    capacity,
+                    refill_per_second,
+                    tokens,
+                )
+            )
+        except Exception:
+            return None
+
     def acquire_lock(self, name: str, ttl_seconds: int = 30) -> str | None:
         try:
             client = self._get_client()

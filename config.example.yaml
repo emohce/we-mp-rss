@@ -49,6 +49,15 @@ mqtt:
   # Required only by the distributed profile. Example: mqtt://mosquitto:1883
   url: ${MQTT_URL:-}
   topic_prefix: ${MQTT_TOPIC_PREFIX:-werss/v2}
+
+intelligence:
+  # Enable only after the v2 migration has been reviewed and applied.
+  enabled: ${INTELLIGENCE_ENABLED:-False}
+  # This gate authorizes scheduled live WeChat requests. Keep disabled while
+  # validating migrations or UI behavior.
+  collector_enabled: ${INTELLIGENCE_COLLECTOR_ENABLED:-False}
+  # Used to build share links; leave empty to return a relative URL.
+  public_base_url: ${PUBLIC_BASE_URL:-}
 #Redis 连接配置，用于缓存 Token 等数据，可选配置
 #格式: redis://[:password@]host:port/db 或 rediss://[:password@]host:port/db (SSL)
 #例如: redis://localhost:6379/0 或 redis://:password@redis.example.com:6379/1

@@ -42,7 +42,7 @@ class Db:
             
             # SQLite 连接参数
             connect_args = {}
-            if con_str.startswith('sqlite:///'):
+            if con_str.startswith('sqlite'):
                 connect_args = {"check_same_thread": False}
             
             engine_options = {
@@ -51,7 +51,7 @@ class Db:
                 "future": True,
                 "connect_args": connect_args,
             }
-            if not con_str.startswith("sqlite:///"):
+            if not con_str.startswith("sqlite"):
                 engine_options.update({
                     "pool_size": 5,
                     "max_overflow": 10,
@@ -69,7 +69,7 @@ class Db:
                     print_info(f"[SQL] {statement}")
             
             # 为 SQLite 设置 text_factory 处理无效 UTF-8 字符
-            if con_str.startswith('sqlite:///'):
+            if con_str.startswith('sqlite'):
                 @event.listens_for(self.engine, "connect")
                 def set_sqlite_text_factory(dbapi_conn, connection_record):
                     # 将无效 UTF-8 字符替换为 �

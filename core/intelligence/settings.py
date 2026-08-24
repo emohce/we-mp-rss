@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from enum import Enum
+from typing import Callable
 
 
 class StorageProfile(str, Enum):
@@ -31,8 +32,18 @@ class InfrastructureSettings:
     public_base_url: str = ""
 
     @classmethod
-    def from_env(cls) -> "InfrastructureSettings":
-        raw_profile = os.getenv("STORAGE_PROFILE", "lite").strip().lower()
+    def from_env(
+        cls,
+        config_getter: Callable[[str, object], object] | None = None,
+    ) -> "InfrastructureSettings":
+        def read(env_key: str, config_key: str, default: str) -> str:
+            if env_key in os.environ:
+                return os.environ[env_key]
+            if config_getter is not None:
+                return str(config_getter(config_key, default) or "")
+            return default
+
+        raw_profile = read("STORAGE_PROFILE", "storage.profile", "lite").strip().lower()
         try:
             profile = StorageProfile(raw_profile)
         except ValueError as exc:
@@ -41,15 +52,25 @@ class InfrastructureSettings:
             ) from exc
         return cls(
             profile=profile,
-            database_url=os.getenv("DB", "sqlite:///./data/db.db").strip(),
-            redis_url=os.getenv("REDIS_URL", "").strip(),
-            mqtt_url=os.getenv("MQTT_URL", "").strip(),
-            mqtt_topic_prefix=os.getenv("MQTT_TOPIC_PREFIX", "werss/v2").strip("/"),
-            content_backend=os.getenv("CONTENT_BACKEND", "local").strip().lower(),
-            content_root=os.getenv("CONTENT_ROOT", "./data/content").strip(),
-            s3_bucket=os.getenv("S3_BUCKET", "").strip(),
-            s3_endpoint_url=os.getenv("S3_ENDPOINT_URL", "").strip(),
-            public_base_url=os.getenv("PUBLIC_BASE_URL", "").rstrip("/"),
+            database_url=read("DB", "db", "sqlite:///./data/db.db").strip(),
+            redis_url=read("REDIS_URL", "redis.url", "").strip(),
+            mqtt_url=read("MQTT_URL", "mqtt.url", "").strip(),
+            mqtt_topic_prefix=read(
+                "MQTT_TOPIC_PREFIX", "mqtt.topic_prefix", "werss/v2"
+            ).strip("/"),
+            content_backend=read(
+                "CONTENT_BACKEND", "storage.content_backend", "local"
+            ).strip().lower(),
+            content_root=read(
+                "CONTENT_ROOT", "storage.content_root", "./data/content"
+            ).strip(),
+            s3_bucket=read("S3_BUCKET", "storage.s3_bucket", "").strip(),
+            s3_endpoint_url=read(
+                "S3_ENDPOINT_URL", "storage.s3_endpoint_url", ""
+            ).strip(),
+            public_base_url=read(
+                "PUBLIC_BASE_URL", "intelligence.public_base_url", ""
+            ).rstrip("/"),
         )
 
     def validate(self) -> list[str]:

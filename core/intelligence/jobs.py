@@ -6,15 +6,20 @@ from datetime import datetime, timedelta
 from typing import Callable
 
 from sqlalchemy import and_, or_, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from core.models.article import Article
 
+from .idempotency import normalize_idempotency_key
 from .models import (
     CollectionJob,
     CollectorCursor,
     OutboxEvent,
+    WorkflowJob,
+    Workspace,
     WorkspaceArticle,
+    WorkspaceSubscription,
     new_id,
     utcnow,
 )
@@ -25,11 +30,13 @@ class ClaimedJob:
     id: str
     lease_token: str
     workspace_id: str
+    account_id: str | None
     provider: str
     source_id: str
     kind: str
     payload: dict
     attempts: int
+    max_attempts: int
 
 
 class JobRepository:
@@ -49,9 +56,10 @@ class JobRepository:
         priority: int = 0,
         due_at: datetime | None = None,
     ) -> tuple[CollectionJob, bool]:
+        normalized_key = normalize_idempotency_key(idempotency_key, 160)
         with self.session_factory() as session:
             existing = session.scalar(
-                select(CollectionJob).where(CollectionJob.idempotency_key == idempotency_key)
+                select(CollectionJob).where(CollectionJob.idempotency_key == normalized_key)
             )
             if existing:
                 return existing, False
@@ -61,13 +69,22 @@ class JobRepository:
                 provider=provider,
                 source_id=source_id,
                 kind=kind,
-                idempotency_key=idempotency_key,
+                idempotency_key=normalized_key,
                 payload=payload or {},
                 priority=priority,
                 due_at=due_at or utcnow(),
             )
             session.add(job)
-            session.commit()
+            try:
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+                existing = session.scalar(
+                    select(CollectionJob).where(CollectionJob.idempotency_key == normalized_key)
+                )
+                if existing:
+                    return existing, False
+                raise
             session.refresh(job)
             return job, True
 
@@ -126,11 +143,13 @@ class JobRepository:
                     id=job.id,
                     lease_token=token,
                     workspace_id=job.workspace_id,
+                    account_id=job.account_id,
                     provider=job.provider,
                     source_id=job.source_id,
                     kind=job.kind,
                     payload=job.payload or {},
                     attempts=job.attempts,
+                    max_attempts=job.max_attempts,
                 )
         return None
 
@@ -163,24 +182,37 @@ class JobRepository:
                 missing = set(article_ids) - persisted
                 if missing:
                     raise ValueError("cursor cannot advance before every article is persisted")
-                existing_links = set(
+                target_workspace_ids = set(
                     session.scalars(
-                        select(WorkspaceArticle.article_id).where(
-                            WorkspaceArticle.workspace_id == job.workspace_id,
+                        select(WorkspaceSubscription.workspace_id).where(
+                            WorkspaceSubscription.provider == job.provider,
+                            WorkspaceSubscription.source_id == job.source_id,
+                            WorkspaceSubscription.status == "active",
+                        )
+                    ).all()
+                )
+                target_workspace_ids.add(job.workspace_id)
+                existing_links = set(
+                    session.execute(
+                        select(WorkspaceArticle.workspace_id, WorkspaceArticle.article_id).where(
+                            WorkspaceArticle.workspace_id.in_(target_workspace_ids),
                             WorkspaceArticle.article_id.in_(article_ids),
                         )
                     ).all()
                 )
-                for article_id in article_ids:
-                    if article_id not in existing_links:
-                        session.add(
-                            WorkspaceArticle(
-                                workspace_id=job.workspace_id,
-                                article_id=article_id,
-                                source_id=job.source_id,
-                                ingestion_source=ingestion_source,
+                for workspace_id in target_workspace_ids:
+                    for article_id in article_ids:
+                        if (workspace_id, article_id) not in existing_links:
+                            session.add(
+                                WorkspaceArticle(
+                                    workspace_id=workspace_id,
+                                    article_id=article_id,
+                                    source_id=job.source_id,
+                                    ingestion_source=ingestion_source,
+                                )
                             )
-                        )
+            else:
+                target_workspace_ids = {job.workspace_id}
 
             cursor = session.scalar(
                 select(CollectorCursor).where(
@@ -205,6 +237,23 @@ class JobRepository:
             job.lease_token = ""
             job.lease_expires_at = None
             job.updated_at = utcnow()
+            for workspace_id in target_workspace_ids:
+                workspace = session.get(Workspace, workspace_id)
+                for article_id in article_ids:
+                    workflow_key = f"article-analysis:{workspace_id}:{article_id}:v1"
+                    if session.scalar(
+                        select(WorkflowJob.id).where(WorkflowJob.idempotency_key == workflow_key)
+                    ) is None:
+                        session.add(
+                            WorkflowJob(
+                                workspace_id=workspace_id,
+                                user_id=workspace.owner_user_id if workspace else "",
+                                kind="article_analysis",
+                                payload={"article_id": article_id},
+                                idempotency_key=workflow_key,
+                                priority=10,
+                            )
+                        )
             session.add(
                 OutboxEvent(
                     workspace_id=job.workspace_id,

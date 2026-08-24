@@ -1,0 +1,1 @@
+import{v as e}from"./http-DoIGL6PX.js";export{e as getArticles};

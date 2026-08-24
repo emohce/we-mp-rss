@@ -20,6 +20,8 @@ Documentation level: `controlled`
 | WU-3 AI/feedback/digest | 1 | 1 | main | app-root | accepted | deterministic/fake CLI, tenant, feedback, digest and export tests pass | none | paid AI remains opt-in |
 | WU-4 Floating UI | 1 | 1 | main | app-root | accepted | Vite production build and asset-reference checks pass | browser acceptance excluded | retain global drawer; no route added |
 | WU-5 Migration/closeout | 1 | 1 | main | app-root | accepted | offline DDL, Compose parse, docs and split local commits verified | live acceptance excluded | hand off explicit runtime gates |
+| WU-6 Connector revision | 1 | 1 | main | app-root | accepted | SupSub primary sources, generic registry and verification template reconciled | none | retain `researched` state |
+| WU-7 SupSub adapter/canary | 1 | 0 | future | app-root | deferred-by-scope | no install/login/account fixture | explicit implementation and external-action gate | start with Feed/CLI read-only fixture |
 
 ## Execution Journal
 
@@ -33,6 +35,8 @@ Documentation level: `controlled`
 | E-006 | 2026-08-24 | WU-1..3 | app-root | accepted | implemented -> accepted | 39 focused backend tests; three 460-line dialect DDL outputs; Compose config passes | create backend commit `426c9c1` |
 | E-007 | 2026-08-24 | WU-4 | app-root | accepted | implemented -> accepted | Vite production build; 14 index assets present; `dist/assets` equals `static/assets` | create UI commit `754b846` |
 | E-008 | 2026-08-24 | WU-5 | app-root | accepted | verification -> accepted | research/operator/task docs reconciled; live/data gates unchanged | create final documentation batch without push |
+| E-009 | 2026-08-24 | WU-6 | app-root | requirement revision | accepted v2 -> additive connector requirements | RAW-003 requests SupSub and future service integrations | preserve `we-mp-rss` core and define one connector lifecycle |
+| E-010 | 2026-08-24 | WU-6 | app-root | accepted | researched -> accepted documentation scope | public pricing, official CLI source/docs and unresolved contract gaps recorded | keep SupSub runtime `researched` |
 
 ## Checklist
 
@@ -43,3 +47,6 @@ Documentation level: `controlled`
 - [x] Reconcile implementation and documentation.
 - [x] Create coherent local commits without push.
 - [x] Record final document impact and residual runtime gates.
+- [x] Verify SupSub public price, capability, CLI, authentication and high-risk operation boundaries.
+- [x] Add a reusable provider registry and verification template for later integrations.
+- [x] Keep CLI installation, OAuth, purchase, external writes and quota use unexecuted.

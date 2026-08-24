@@ -8,7 +8,8 @@
 | Durable foundation | `7bbe683` | 14 | 增加分档存储、租户模型、租约任务、outbox 和内容存储适配层。 |
 | Intelligence backend | `426c9c1` | 30 | 增加采集、限频、AI/反馈/日报/导出、v2 API 和离线迁移契约。 |
 | Floating workspace | `754b846` | 237 | 增加全局右侧浮窗、API 绑定和经验证的生产构建产物。 |
-| Documentation closeout | 本提交 | 本批次 | 同步 README、运维架构、研究、验证、错误记忆和交接边界。 |
+| Documentation closeout | `13057d4` | 12 | 同步 README、运维架构、研究、验证、错误记忆和交接边界。 |
+| Provider integration revision | 本提交 | 12 | 增加通用连接器注册表、SupSub 核验和 RAW-003。 |
 
 ## 2. 交付物清单
 
@@ -21,6 +22,8 @@
 | `apis/intelligence.py` / `jobs/intelligence.py` | 新增 | 认证 v2 API、公开摘要页和可控后台 Worker。 |
 | `web_ui/src/components/intelligence/IntelligenceHub.vue` | 新增 | 不增加路由的统一智能浮窗。 |
 | `compose/` / `tools/intelligence_schema.py` | 新增 | Distributed 示例和只读/离线数据库交接工具。 |
+| `docs/integrations/` | 新增 | 通用连接器能力、风险、生命周期、事实源和供应商核验模板。 |
+| `docs/research/supsub-integration.md` | 新增 | SupSub 当前价格/能力/CLI 边界、采用顺序和未关闭门禁。 |
 
 ## 3. 逐批清单
 
@@ -28,6 +31,7 @@
 - `7bbe683`：14 个文件，1,455 行新增、41 行删除。
 - `426c9c1`：30 个文件，5,448 行新增、44 行删除。
 - `754b846`：237 个文件，2,349 行新增、1,776 行删除；主要为构建哈希资源换代。
+- `13057d4`：12 个文件，341 行新增、54 行删除。
 
 ## 4. 明确没做的
 
@@ -37,6 +41,7 @@
 | 用户数据库迁移 | 0 | 只提供只读检查器和离线 DDL。 |
 | Redis/MQTT 实际连接 | 0 | 只验证适配契约与 Compose 配置。 |
 | 部署、推送和浏览器验收 | 0 | 均保留为独立门禁。 |
+| SupSub 安装、登录、购买、同步、精读和分享 | 0 | 本轮仅扩充需求与公开证据。 |
 
 ## 5. 用户可见行为变化
 
@@ -49,6 +54,7 @@
 - 上游 `tools/fix_db.py` 存在未终止字符串，导致仓库级 `compileall` 失败；本任务未改该文件。
 - 前端依赖保留 10 个既有审计项，并有大包、直接 `eval` 和动态导入警告。
 - 付费接口价格、微信权限和风控额度都不是稳定静态事实，正式启用前必须再次联网核验。
+- SupSub 尚缺测试账号下的 Feed/OPML/API 字段、合同、配额与冲突证据，不能宣传为已集成。
 
 ## 7. 回归数字
 

@@ -17,9 +17,9 @@ Documentation level: `controlled`
 - Verification map: absent — dynamic impact analysis.
 - Provisional `VerificationImpactTrace` completed before verification commands: `yes`
 - Provisional changed/affected surfaces: SQLAlchemy metadata, storage profiles, Redis/MQTT adapters, v2 service/API,
-  scheduler-safe collector state, Vue router/layout, exports and docs.
+  scheduler-safe collector state, Vue router/layout, exports, provider-integration requirements and docs.
 - Selected focused checks: backend unit/API tests, Python compile, dialect compilation, fake Redis/MQTT contracts,
-  affected Vue type/build, migration dry-run and route/link checks.
+  affected Vue type/build, migration dry-run, provider primary-source evidence and route/link checks.
 - Verification-command provenance: `incoming-plan-reconciled`
 - Full-suite escalation trigger: `none`; unrelated upstream suites remain excluded.
 
@@ -34,6 +34,11 @@ Documentation level: `controlled`
 5. Add v2 APIs, single-article multi-format exports, delivery outbox and tenant-scoped public digest projection.
 6. Replace navigation-heavy UX with an inbox, date archive and right-side floating panels.
 7. Provide a read-only legacy migration inspector and keep all live/data gates closed.
+8. Add one reusable connector capability/risk lifecycle for hosted aggregators, Feed services, paid APIs, AI
+   enrichment and delivery platforms.
+9. Treat SupSub as an optional secondary Feed/discovery/subscription/enrichment connector; keep runtime binding,
+   OAuth, purchase, quota use and external writes behind later gates.
+10. Require dated verification receipts so later services can be evaluated without creating incompatible paths.
 
 ## Delegation Decision
 
@@ -53,6 +58,8 @@ Documentation level: `controlled`
 | WU-3 Intelligence | app-root | backend | main-only | WU-1 | local CLI adapters; no secrets | topics/feedback/digests | app-root | deterministic analysis |
 | WU-4 Experience | app-root | frontend | main-only | WU-1..3 API | Vue source/build only | inbox and floating panels | app-root | retain v1 routes |
 | WU-5 Closeout | app-root | docs/tests | main-only | WU-1..4 | no deploy/push/data mutation | evidence and local commits | app-root | explicit residual gates |
+| WU-6 Connector revision | app-root | research/docs | main-only | accepted v2 | public evidence only | registry, template and SupSub adoption decision | app-root | no runtime binding |
+| WU-7 SupSub canary | app-root | future adapter/runtime | main-only | WU-6 + user gate | test account, one-way read first | fixture contract then bounded canary | app-root | disable connector |
 
 ## Sidecar Strategy
 
@@ -68,10 +75,16 @@ Documentation level: `controlled`
 - Redis/MQTT outages must fall back to database polling/outbox replay rather than lose tasks or advance cursors.
 - AI CLI output is untrusted; strict JSON parsing and deterministic fallback are mandatory.
 - Direct URL download requires host allowlists, redirect checks and path-safe export names.
+- External aggregators can silently create a second truth, duplicate provider spend or cause sync loops unless every
+  identity, direction, cursor and billable operation is persisted locally.
+- SupSub CLI has external writes, quota-consuming AI work and public/non-revocable share behavior; command-level
+  allowlists and risk gates are required before any adapter implementation.
 
 ## Verification
 
 - Source evidence and `doc_drift`: README/config previously exposed SQLite/MySQL/PostgreSQL, an embedded Redis
   server and HTTP cascade without authoritative storage profiles or MQTT/outbox semantics; the current docs now
   define those boundaries and keep v1 behavior explicit.
+- RAW-003 provider evidence is isolated in dated research and a reusable verification template; volatile prices and
+  limits are not copied into runtime defaults.
 - Final document impact and synchronization owner: `project-current`, App Root.

@@ -35,8 +35,23 @@ privacy_boundary: no-verbatim-prompt-or-transcript
 数据库、Redis 和 MQTT。系统仍以原始内容聚合、AI 过滤、反馈学习、汇总和下载目标为准，
 技术选型应从可靠性、扩展性与本地部署能力出发。
 
+## RAW-003
+
+```yaml
+raw_id: RAW-003
+captured_at: 2026-08-24
+state: active
+source_lineage: current-user-integration-expansion
+privacy_boundary: no-verbatim-prompt-or-transcript
+```
+
+用户要求结合 SupSub 当前提供的托管订阅、AI 筛选、RSS/Atom/JSON、OPML 和 CLI 能力扩充原始
+需求，并把本次核验沉淀为可继续接入更多服务的通用方式。外部服务不能取代 `we-mp-rss` 核心；
+未来集成需要可验证、可分阶段启用，并明确认证、费用、限额、同步冲突、不可逆操作和隐私边界。
+
 ## Capture Boundary
 
-- Included: 产品范围、仓库角色、技术约束及其后续覆盖、交互方式、采集与限频、验证和 Git 边界。
+- Included: 产品范围、仓库角色、技术约束及其后续覆盖、交互方式、采集与限频、外部连接器、
+  验证和 Git 边界。
 - Excluded: 对话逐字稿、工具输出、凭据、Cookie、隐藏推理。
 - Audio unavailable or unclear terms: `AR` 已按上下文确认为 AI 内容过滤。

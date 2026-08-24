@@ -11,7 +11,8 @@ Documentation level: `controlled`
 - Group key: `dsg:we-mp-rss:wechat-intelligence-hub-v1`
 - Group owner: this `spec.md`
 - Task-root discovery prefix: `docs/tasks/260824-wechat-intelligence-hub/`
-- Durable document members: raw requirement, spec, plan, tasks, verify, handoff, changes and research evidence.
+- Durable document members: raw requirement, spec, plan, tasks, verify, handoff, changes, integration registry and
+  research evidence.
 - Declared code/config dependencies: backend v2 modules, SQLAlchemy models, FastAPI router, Vue UI and config defaults.
 - Linked authorities: repository `AGENTS.md`, upstream README and `SECURITY.md`.
 - Excluded unrelated documents: upstream release notes and historical issue records.
@@ -25,11 +26,13 @@ Documentation level: `controlled`
   "group_owner": "docs/tasks/260824-wechat-intelligence-hub/spec.md",
   "documents": [
     "docs/tasks/260824-wechat-intelligence-hub",
-    "docs/research/wechat-collection-landscape.md"
+    "docs/integrations",
+    "docs/research/wechat-collection-landscape.md",
+    "docs/research/supsub-integration.md"
   ],
   "dependencies": ["core/intelligence", "apis/intelligence.py", "web_ui/src"],
-  "validators": [],
-  "git_scope_prefixes": ["docs/tasks/260824-wechat-intelligence-hub", "docs/research"]
+  "validators": ["local-markdown-links", "provider-evidence-freshness"],
+  "git_scope_prefixes": ["docs/tasks/260824-wechat-intelligence-hub", "docs/integrations", "docs/research"]
 }
 ```
 
@@ -46,6 +49,10 @@ Documentation level: `controlled`
 - 每篇文章可下载；每日 06:30 采集、07:50 截止、08:00 生成按日期归档的摘要页。
 - AI 识别文章与公众号主题，按用户兴趣过滤；明确反馈即时生效，推断规则需批准。
 - 主要页面限定为登录、统一收件箱和日期摘要，管理能力使用浮窗。
+- 外部托管聚合、Feed、付费 API、AI 增强和投递服务必须通过同一连接器注册表接入，按能力与风险
+  分级；SupSub 是首个样板连接器，但不进入默认运行时。
+- 连接器首版只读和单向同步优先，文章保留供应商来源与外部身份；订阅写回、按次计费、不可逆
+  已读和公开分享需要逐项确认。
 
 ## Success Criteria
 
@@ -56,6 +63,8 @@ Documentation level: `controlled`
   上游单用户边界运行，不被描述为 v2 多租户能力。
 - 旧 v1 行为仍可运行；新实现不复制 AGPL 或未授权的第三方源码。
 - 所有实现按主题拆为本地提交，不推送，不调用真实微信或付费接口。
+- 新供应商在关闭 Feed/API 格式、认证、额度、合同和数据处理缺口前只能处于 `researched`，不能
+  宣称已经集成或自动降级到该供应商。
 
 ## Constraints
 
@@ -65,6 +74,9 @@ Documentation level: `controlled`
   outbox 保证一致性。
 - Redis 和 MQTT 可以降级或暂时离线，但不得成为文章、游标、反馈或计费状态的唯一保存位置。
 - 过滤只能折叠或排序，不能静默删除文章。
+- 外部服务不得成为文章、反馈、用户状态、任务或用量账本的唯一事实源；带密钥 Feed URL、OAuth
+  token 和本地 CLI 凭据只能通过 secret reference 使用。
+- R2 外部写入、R3 额度消耗和 R4 不可逆/公开操作不能由无人值守计划任务隐式执行。
 
 ## Prior Task Overlap
 
@@ -78,13 +90,13 @@ Documentation level: `controlled`
 
 ```yaml
 spec_id: WXI-001
-spec_revision: 2
+spec_revision: 3
 status: confirmed
-raw_sources: [RAW-001, RAW-002]
+raw_sources: [RAW-001, RAW-002, RAW-003]
 targets:
   - canonical_manifest: this-spec
     base_full_version: upstream-f54aba5
-    result_full_version: czz-main-v1
+    result_full_version: czz-main-v2
 delta:
   - requirement_id: WXI-STORAGE
     operation: modify
@@ -107,6 +119,20 @@ delta:
     raw_refs: [RAW-002]
     confirmation: explicit
     canonical_location: spec.md
+  - requirement_id: WXI-CONNECTORS
+    operation: add
+    before: provider-specific collectors without a common external-integration lifecycle
+    after: capability-based connector registry with provenance, sync cursors, usage ledger and verification receipts
+    raw_refs: [RAW-003]
+    confirmation: explicit
+    canonical_location: docs/integrations/README.md
+  - requirement_id: WXI-SUPSUB
+    operation: add
+    before: no SupSub adoption decision
+    after: SupSub researched as an optional Feed, discovery, subscription-sync and quota-gated enrichment connector
+    raw_refs: [RAW-003]
+    confirmation: explicit
+    canonical_location: docs/research/supsub-integration.md
 memory_used: []
 memory_updates: [project-error-memory:sqlite-memory-pool-routing]
 open_questions: []
@@ -116,7 +142,8 @@ open_questions: []
 
 - Bounded scan scope / owners: upstream models, APIs, scheduler, Vue routes, README and security guidance.
 - Visible added: AI topics, feedback learning, dated digests, single-article multi-format export, tenant state,
-  durable rate limits, PostgreSQL production profile, Redis coordination and MQTT event transport.
+  durable rate limits, PostgreSQL production profile, Redis coordination, MQTT event transport, a generic connector
+  lifecycle and a SupSub integration decision.
 - Visible changed: SQLite-only is superseded by tiered storage; read/favorite state becomes per-user; management
   moves into floating panels.
 - Visible removed/superseded: unbounded subscription backfill and new independent management pages.
@@ -125,6 +152,8 @@ open_questions: []
 - Decision status: `explicit-current-request`.
 - Decision source: approved current plan.
 - Post-sync rescan: completed; storage, UX and infrastructure decisions match the implementation and operator docs.
+- RAW-003 is additive: it expands future integration requirements without changing the accepted v2 runtime or
+  authorizing a SupSub installation, login, purchase or protected API call.
 
 ## Execution Authority
 
@@ -148,3 +177,5 @@ open_questions: []
 - Upstream baseline: `f54aba50cbf349ed7e4ee1dae8bfe9990d0c5894`.
 - Reference baseline: `Wechat2RSS` `0416ecfb73e42e98b88b70e530609c406d3e5e42`.
 - Research evidence: [wechat-collection-landscape.md](../../research/wechat-collection-landscape.md).
+- SupSub evidence: [supsub-integration.md](../../research/supsub-integration.md).
+- Connector authority: [integration registry](../../integrations/README.md).

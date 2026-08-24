@@ -9,20 +9,22 @@ Documentation level: `controlled`
 ## Control Plane Snapshot
 
 - Controller: `app-root`
-- Work-order version: 1
+- Work-order version: 2
 - Canonical plan: [plan.md](plan.md)
 - Canonical task ledger: [tasks.md](tasks.md)
-- Last material event: WU-1 through WU-5 accepted within static/offline scope; runtime gates retained.
+- Last material event: WU-6 connector requirement revision accepted; WU-7 SupSub runtime canary deferred.
 
 ## Current State
 
-- Core repository is on local `czz-main`, based on upstream `f54aba5` and containing split local implementation
-  commits through `754b846` before this documentation batch.
+- Core repository is on local `czz-main`, based on upstream `f54aba5` and containing split local commits through
+  `13057d4` before the RAW-003 documentation batch.
 - `Wechat2RSS` is a read-only local reference at `0416ecf`.
 - Legacy repository retains rollback branch and stash; its `czz-main` has three local documentation commits.
 - No live provider, credential, user database, deployment or push action has occurred.
 - RAW-002 supersedes the SQLite-only interpretation: PostgreSQL + Redis is the recommended production profile;
   MQTT is optional distributed event transport and SQLite remains the Lite profile.
+- RAW-003 adds a provider-neutral connector lifecycle and a SupSub research decision without authorizing runtime
+  installation or changing the accepted core implementation.
 
 ## Completed
 
@@ -33,6 +35,7 @@ Documentation level: `controlled`
 - Tenant-scoped v2 article/analysis/feedback/preference/digest/download APIs and cursor-safe provider workers.
 - Global right-side intelligence drawer and synchronized production bundle without new navigation routes.
 - Controlled requirement, operator, research, verification and error-memory documentation.
+- Reusable connector registry/verification template and a dated SupSub price, CLI, authentication and risk snapshot.
 
 ## Documentation Impact
 
@@ -46,9 +49,11 @@ Documentation level: `controlled`
 - Back up and inspect the actual database, review generated DDL, then approve a staging migration.
 - Configure and connect PostgreSQL/Redis; add MQTT only for a distributed deployment.
 - Review current official-account permissions or a paid supplier contract, then authorize one bounded live canary.
+- For SupSub, verify Feed/OPML formats, terms, quotas and account fixtures; then separately approve CLI installation,
+  OAuth and a one-way read-only canary if still desired.
 - Run browser/accessibility acceptance, notification delivery checks and deployment acceptance.
 
 ## Next Safe Step
 
-- After explicit approval, run the read-only schema inspector against the intended staging database and review its
-  report before any DDL or data backfill.
+- Continue adding future services through the provider verification template. For a SupSub implementation, the next
+  safe step is a user-supplied test Feed/OPML sample or separately authorized test account—not a production sync.

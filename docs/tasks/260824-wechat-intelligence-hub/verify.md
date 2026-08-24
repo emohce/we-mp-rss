@@ -17,7 +17,7 @@ Documentation level: `controlled`
 - Checked: 39 backend tests, task-scoped Python compilation, three SQL dialect DDL renders, Compose parsing,
   frontend production build, generated-asset integrity, source whitespace and sensitive-pattern checks.
 - Skipped: live WeChat, paid API, AI CLI, Redis/MQTT connections, SMTP/Webhooks, browser acceptance, user or
-  production database mutation, deployment and push.
+  production database mutation, SupSub installation/login/protected calls, deployment and push.
 - Full-suite escalation: `none`.
 - Owner: App Root.
 - Residual risk: external provider behavior remains user-owned runtime acceptance.
@@ -32,6 +32,7 @@ Documentation level: `controlled`
 | AI/feedback/digests | v2 API/UI | untrusted CLI output | deterministic and fake CLI tests | real CLIs excluded | pass |
 | Vue inbox/floating panels | browser bundle | routing/accessibility | production build and focused source/asset assertions | subjective visual acceptance | pass (build/static) |
 | migration inspector | admin handoff | legacy DB mapping | read-only fixture and offline DDL | actual migration gated | pass (offline) |
+| SupSub requirement revision | connector registry and future adapters | price/auth/quota/mutation drift | official page, public price response and official CLI source/docs | account canary and protected interfaces excluded | pass (research) |
 
 ## Evidence Receipts
 
@@ -48,6 +49,18 @@ Documentation level: `controlled`
 - Source-only `git diff --check` and staged secret-pattern scans passed. Generated Monaco/Vite bundles contain
   upstream line-ending whitespace, so they are accepted by build plus byte-for-byte asset verification instead
   of rewriting minified strings.
+
+## SupSub Research Receipt
+
+- Public pricing snapshot: monthly ¥29, yearly ¥299 with ¥348 original-year field, 200 subscriptions and 10 focus
+  points; price is dated and not used as runtime configuration.
+- Official CLI snapshot: Git commit `84744549dfc35e8d829e0c7a4c144b51cf2b8659`, npm `0.4.3`, MIT.
+- Official CLI contracts confirm JSON output, OAuth Device Flow without an API-key bypass, quota-consuming deepread,
+  no raw-article endpoint, whole-source irreversible read actions and public/non-revocable deepread shares.
+- The pricing endpoint's observed rate-limit header was explicitly rejected as evidence for a general content API
+  quota. Marketing efficiency/source-count claims were also excluded from acceptance evidence.
+- Documentation closeout resolved 15 local links, parsed all 4 documentation-sync members and 2 validators, and
+  received HTTP 200 from 7 selected SupSub product, price, repository and CLI documentation URLs.
 
 ## Verified Failure And Recovery
 
@@ -68,6 +81,8 @@ Documentation level: `controlled`
   explicit acceptance gates.
 - `npm ci` reported 10 existing dependency audit findings (3 moderate, 7 high). The build also retains upstream
   large-chunk, direct-`eval` and ineffective-dynamic-import warnings; no broad dependency upgrade was attempted.
+- SupSub Feed URL/authentication, OPML conflict semantics, protected-interface quotas/SLA, deepread allowance,
+  service/privacy terms and stable field fixtures remain unverified; its runtime state is therefore `researched`.
 
 ## Memory Decision
 
@@ -80,4 +95,5 @@ Documentation level: `controlled`
 - Project entry: repository `AGENTS.md`.
 - Sidecar: main-only, not applicable.
 - Document routing: Controlled task folder plus project-current documentation.
-- High-risk gate: live calls, credentials, user DB mutation, deployment and push remain blocked.
+- High-risk gate: live calls, credentials, SupSub installation/OAuth/purchase/mutations/quota use, user DB mutation,
+  deployment and push remain blocked.

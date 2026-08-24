@@ -14,6 +14,8 @@ Last verified: 2026-08-24
   通用额度。
 - **供应商文档确认**：AIDATA 当前文章列表接口支持 `offset/page_size`、一小时缓存和强制刷新。
   2026-08-24 页面显示普通请求 $0.01、缓存结果 $0.0005；价格会变，部署前必须重新核对。
+- **托管聚合服务确认**：SupSub 提供公众号/网站/X 聚合、RSS/Atom/JSON 输出、OPML 迁移、关注点
+  和 CLI；它是独立托管连接器，不是微信官方历史文章 API，也不能作为规避限频的账户池。
 - **明确推断**：未发现微信为“任意公众号历史文章”提供官方、稳定、可购买的统一额度。可观测的
   风控码和等待时间只能用于保守状态机，不能宣传为官方 SLA 或精确日限额。
 
@@ -25,6 +27,7 @@ Last verified: 2026-08-24
 | 微信官方素材/发布 API | 自有或授权公众号 | 依赖该账号 access token 与当前接口权限，不覆盖任意公众号历史 | 授权账号优先 |
 | `we-mp-rss` 公众号后台采集 | 搜索、列表、正文、RSS | 私有接口会话和风控，无官方稳定额度 | 默认核心，增加持久预算/游标/熔断 |
 | AIDATA/同类付费 API | 分页文章列表和缓存 | 计费、字段与供应商依赖，价格可变 | 可选、允许域名且预算封顶的补采/降级 |
+| SupSub | 托管聚合、Feed/OPML、搜索、关注点、精读 | OAuth/套餐依赖；部分写操作不可逆；Feed/API 细节待 canary | `researched`，首选单向只读连接器，不替代核心 |
 | 微信读书 | 低频发现近期群发文章 | 通常最近约 20 篇、可能延迟、账号风控 | 实验性且默认关闭 |
 
 ## 核验来源
@@ -33,6 +36,7 @@ Last verified: 2026-08-24
 - `Wechat2RSS`：[仓库](https://github.com/ttttmr/Wechat2RSS)、[QA/限频与历史范围](https://github.com/ttttmr/Wechat2RSS/blob/master/deploy/qa.md)、[API](https://github.com/ttttmr/Wechat2RSS/blob/master/deploy/api.md)、[部署协议](https://github.com/ttttmr/Wechat2RSS/blob/master/deploy/agreement.md)。
 - 官方授权范围：[已发布内容](https://developers.weixin.qq.com/doc/subscription/api/public/api_freepublish_batchget.html)、[永久素材](https://developers.weixin.qq.com/doc/offiaccount/Asset_Management/Get_materials_list.html)。官方页面在本次自动抓取环境中不可解析，部署时需在公众号后台按实际账号权限复核。
 - 付费接口：[AIDATA 文章列表](https://aidata.vip/zh-cn/api/endpoints/weixin/mp/article/list)。
+- 托管聚合：[SupSub 定价](https://supsub.net/#pricing)、[SupSub CLI](https://github.com/SupSub-AI/supsub-cli)；详细采用决策见 [SupSub 核验](supsub-integration.md)。
 - 开源参考：[`cooderl/wewe-rss`](https://github.com/cooderl/wewe-rss)、[`wechat-article-exporter`](https://github.com/wechat-article/wechat-article-exporter/issues/200)、[`wx-kit`](https://github.com/monkeychen/wx-kit/blob/main/AGENTS.md)、[`wechat-mp-article-list`](https://github.com/Alex-giao/wechat-mp-article-list/blob/main/references/backend-workflow.md)。
 
 ## 限频原则
@@ -67,3 +71,5 @@ Last verified: 2026-08-24
   本项目只借鉴公开文档中的行为和限频策略。
 - 当前 `wechat-download-api` 是 AGPL-3.0-only；只迁移需求、数据映射和行为，不复制源码。
 - `wewe-rss` 可作为 MIT 参考，但项目归档且远程中继不进入运行时依赖。
+- SupSub CLI 为 MIT，但托管服务、用户内容和账号数据仍受其服务与隐私条款约束；复用 CLI 许可证
+  不等于获得托管数据的再分发许可。

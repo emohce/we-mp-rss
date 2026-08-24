@@ -1,13 +1,15 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, DateTime,Date,ForeignKey,Boolean,Enum,Table,JSON
+from sqlalchemy import Text as SQLText
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy import inspect
 from sqlalchemy.exc import SQLAlchemyError
-from core.config import cfg
 
-if cfg.get("db","mysql").startswith("mysql"):
-    from sqlalchemy.dialects.mysql import MEDIUMTEXT as Text
-else:
-    from sqlalchemy import Text
+# Keep model imports configuration-free and let SQLAlchemy select the concrete
+# type per engine.  The previous import-time cfg fallback chose MEDIUMTEXT when
+# config.yaml was absent, which made the same metadata impossible to compile on
+# SQLite or PostgreSQL.
+Text = SQLText().with_variant(MEDIUMTEXT(), "mysql")
 
 class DataStatus():
     DELETED:int = 1000

@@ -45,24 +45,28 @@ class Db:
             if con_str.startswith('sqlite:///'):
                 connect_args = {"check_same_thread": False}
             
-            self.engine = create_engine(con_str,
-                                     pool_size=2,          # 最小空闲连接数
-                                     max_overflow=20,      # 允许的最大溢出连接数
-                                     pool_timeout=30,      # 获取连接时的超时时间（秒）
-                                     echo=False,
-                                     pool_recycle=60,  # 连接池回收时间（秒）
-                                     isolation_level="AUTOCOMMIT",  # 设置隔离级别
-                                    #  isolation_level="READ COMMITTED",  # 设置隔离级别
-                                    #  query_cache_size=0,
-                                     connect_args=connect_args
-                                     )
+            engine_options = {
+                "pool_pre_ping": True,
+                "echo": False,
+                "future": True,
+                "connect_args": connect_args,
+            }
+            if not con_str.startswith("sqlite:///"):
+                engine_options.update({
+                    "pool_size": 5,
+                    "max_overflow": 10,
+                    "pool_timeout": 30,
+                    "pool_recycle": 1800,
+                })
+            self.engine = create_engine(con_str, **engine_options)
             
             # 添加SQL执行事件监听器，打印执行的SQL语句
-            @event.listens_for(self.engine, "before_cursor_execute")
-            def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-                print_info(f"[SQL] {statement}")
-                if parameters:
-                    print_info(f"[参数] {parameters}")
+            if cfg.get("database.log_sql", False):
+                @event.listens_for(self.engine, "before_cursor_execute")
+                def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+                    # SQL parameter logging is opt-in because parameters may
+                    # contain tokens, article bodies or user feedback.
+                    print_info(f"[SQL] {statement}")
             
             # 为 SQLite 设置 text_factory 处理无效 UTF-8 字符
             if con_str.startswith('sqlite:///'):
@@ -72,6 +76,7 @@ class Db:
                     dbapi_conn.execute("PRAGMA journal_mode=WAL")
                     dbapi_conn.execute("PRAGMA busy_timeout=10000")
                     dbapi_conn.execute("PRAGMA synchronous=NORMAL")
+                    dbapi_conn.execute("PRAGMA foreign_keys=ON")
                     dbapi_conn.text_factory = lambda x: x.decode('utf-8', errors='replace')
             
             self.session_factory=self.get_session_factory()
@@ -110,6 +115,9 @@ class Db:
     def create_tables(self):
         """Create all tables defined in models"""
         from core.models.base import Base as B # 导入所有模型
+        # Import v2 models lazily to avoid a package initialization cycle while
+        # still registering their ``int_`` tables on the shared metadata.
+        import core.intelligence.models  # noqa: F401
         try:
             B.metadata.create_all(self.engine)
         except Exception as e:

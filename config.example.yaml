@@ -29,6 +29,26 @@ server:
 #则使用mysql+pymysql://<username>:<password>@<host>/<database>?charset=<数据库编码>的形式
 #安全提示：生产环境请通过环境变量DB设置数据库连接字符串，不要使用默认值
 db: ${DB:-sqlite:///./data/db.db}
+
+# Intelligence Hub v2 infrastructure profile:
+# - lite: SQLite + local content store
+# - standard: PostgreSQL + Redis (recommended for production)
+# - distributed: standard profile + MQTT for collector/delivery events
+storage:
+  profile: ${STORAGE_PROFILE:-lite}
+  content_backend: ${CONTENT_BACKEND:-local}
+  content_root: ${CONTENT_ROOT:-./data/content}
+  s3_bucket: ${S3_BUCKET:-}
+  s3_endpoint_url: ${S3_ENDPOINT_URL:-}
+
+database:
+  # SQL parameters can include sensitive article/user data. Keep disabled.
+  log_sql: ${DB_LOG_SQL:-False}
+
+mqtt:
+  # Required only by the distributed profile. Example: mqtt://mosquitto:1883
+  url: ${MQTT_URL:-}
+  topic_prefix: ${MQTT_TOPIC_PREFIX:-werss/v2}
 #Redis 连接配置，用于缓存 Token 等数据，可选配置
 #格式: redis://[:password@]host:port/db 或 rediss://[:password@]host:port/db (SSL)
 #例如: redis://localhost:6379/0 或 redis://:password@redis.example.com:6379/1
@@ -38,7 +58,9 @@ redis:
   url: ${REDIS_URL:-redis://127.0.0.1:6379/0}
    #内置 Redis 服务端配置 (当使用 tools/redis_server.py 启动时)
   server:
-    enabled: ${REDIS_SERVER_ENABLED:-True}
+    # Development compatibility helper only. Standard deployments should use
+    # a maintained Redis service instead of the embedded implementation.
+    enabled: ${REDIS_SERVER_ENABLED:-False}
     #监听地址
     host: ${REDIS_SERVER_HOST:-0.0.0.0}
     #监听端口

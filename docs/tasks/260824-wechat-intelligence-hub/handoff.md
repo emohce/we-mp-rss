@@ -12,11 +12,12 @@ Documentation level: `controlled`
 - Work-order version: 1
 - Canonical plan: [plan.md](plan.md)
 - Canonical task ledger: [tasks.md](tasks.md)
-- Last material event: repository initialization accepted; WU-1 active.
+- Last material event: WU-1 through WU-5 accepted within static/offline scope; runtime gates retained.
 
 ## Current State
 
-- Core repository is on local `czz-main` at upstream `f54aba5`.
+- Core repository is on local `czz-main`, based on upstream `f54aba5` and containing split local implementation
+  commits through `754b846` before this documentation batch.
 - `Wechat2RSS` is a read-only local reference at `0416ecf`.
 - Legacy repository retains rollback branch and stash; its `czz-main` has three local documentation commits.
 - No live provider, credential, user database, deployment or push action has occurred.
@@ -28,19 +29,26 @@ Documentation level: `controlled`
 - Online and local source/license research.
 - Recoverable legacy Git re-batching.
 - Core/reference clone and remote write protection.
-- Controlled requirement and plan baseline.
+- Tiered SQLite/PostgreSQL storage, Redis coordination, optional MQTT/outbox transport and content-store contracts.
+- Tenant-scoped v2 article/analysis/feedback/preference/digest/download APIs and cursor-safe provider workers.
+- Global right-side intelligence drawer and synchronized production bundle without new navigation routes.
+- Controlled requirement, operator, research, verification and error-memory documentation.
 
 ## Documentation Impact
 
 - Authority refs: repository rules, upstream source, approved plan and research evidence.
-- `doc_drift`: pending implementation reconciliation.
+- `doc_drift`: reconciled; no known conflict remains between Spec, implementation, README/config and operator docs.
 - Final impact: `project-current`.
-- Pending gate: code, tests, README/config and this ledger must agree.
+- Verification boundary: static/offline evidence accepted; runtime acceptance remains separate.
 
-## Open Items
+## Open Runtime Gates
 
-- Implement WU-1 through WU-5 and update [verify.md](verify.md).
+- Back up and inspect the actual database, review generated DDL, then approve a staging migration.
+- Configure and connect PostgreSQL/Redis; add MQTT only for a distributed deployment.
+- Review current official-account permissions or a paid supplier contract, then authorize one bounded live canary.
+- Run browser/accessibility acceptance, notification delivery checks and deployment acceptance.
 
 ## Next Safe Step
 
-- Add isolated v2 SQLite models and services without altering existing tables or starting the application.
+- After explicit approval, run the read-only schema inspector against the intended staging database and review its
+  report before any DDL or data backfill.

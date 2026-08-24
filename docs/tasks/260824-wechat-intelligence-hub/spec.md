@@ -52,7 +52,8 @@ Documentation level: `controlled`
 - v2 API、跨 SQLite/PostgreSQL 模型、Redis/MQTT 适配层、采集状态机、AI/反馈服务、日期摘要、
   单篇导出和浮窗 UI 可构建并有聚焦测试。
 - 任何采集失败都不会提前推进游标或无限扩张队列。
-- 用户无法通过文章、搜索、导出、摘要、RSS 或 MCP 读取其他工作区数据。
+- v2 文章、搜索、导出、摘要与公开分享投影都执行工作区校验；未改造的 v1 RSS/MCP 继续按
+  上游单用户边界运行，不被描述为 v2 多租户能力。
 - 旧 v1 行为仍可运行；新实现不复制 AGPL 或未授权的第三方源码。
 - 所有实现按主题拆为本地提交，不推送，不调用真实微信或付费接口。
 
@@ -88,7 +89,7 @@ delta:
   - requirement_id: WXI-STORAGE
     operation: modify
     before: global article state and optional external infrastructure
-    after: SQLite-first tenant-scoped state and durable jobs
+    after: tiered tenant-scoped durable state with SQLite Lite, PostgreSQL plus Redis recommended, and optional MQTT
     raw_refs: [RAW-001]
     confirmation: explicit
     canonical_location: spec.md
@@ -107,7 +108,7 @@ delta:
     confirmation: explicit
     canonical_location: spec.md
 memory_used: []
-memory_updates: []
+memory_updates: [project-error-memory:sqlite-memory-pool-routing]
 open_questions: []
 ```
 
@@ -123,7 +124,7 @@ open_questions: []
   SQLite-only interpretation while preserving SQLite Lite compatibility.
 - Decision status: `explicit-current-request`.
 - Decision source: approved current plan.
-- Post-sync rescan: pending until closeout.
+- Post-sync rescan: completed; storage, UX and infrastructure decisions match the implementation and operator docs.
 
 ## Execution Authority
 

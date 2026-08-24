@@ -82,6 +82,9 @@ docker run -d  --name we-mp-rss  -p 8001:8001 -v ./data:/app/data  docker.1ms.ru
 - **环境异常统计**：自动统计微信公众号文章获取时的环境异常情况
 - **Headers和Cookies认证**：消息任务支持自定义Headers和Cookies，用于需要认证的WebHook调用
 - **配置缓存**：支持Redis、Memcached和内存缓存，提升配置读取性能
+- **智能聚合浮窗（v2）**：工作区隔离、AI主题/相关度过滤、反馈学习、日期日报、单篇下载，
+  并提供 SQLite Lite、PostgreSQL + Redis Standard、PostgreSQL + Redis + MQTT Distributed 档位。
+  后台任务和真实采集默认关闭，详见 [Intelligence Hub v2](docs/intelligence-hub.md)。
 
 
 # ❤️ 赞助
@@ -109,7 +112,7 @@ docker run -d  --name we-mp-rss  -p 8001:8001 -v ./data:/app/data  docker.1ms.ru
 项目采用前后端分离架构：
 - 后端：Python + FastAPI
 - 前端：Vue 3 + Vite
-- 数据库：SQLite (默认)/MySQL
+- 数据库：SQLite（默认）/MySQL/PostgreSQL；智能聚合生产档位推荐 PostgreSQL + Redis，MQTT 仅用于分布式事件
 <img src="docs/架构原理.png" alt="架构原理" width="80%"/>
 
 更多项目原理，请参考[项目文档](https://deepwiki.com/rachelos/we-mp-rss/3.5-notification-system)。

@@ -31,7 +31,7 @@ Documentation level: `controlled`
    distributed collectors and deliveries, with database-backed replay.
 3. Add provider adapters, cursor-safe collection, rate-limit state and daily schedule policy.
 4. Add AI analysis adapters, immutable feedback, approval-gated preferences and dated digests.
-5. Add v2 APIs, single/bulk exports, delivery outbox and tenant-scoped feeds/MCP contract.
+5. Add v2 APIs, single-article multi-format exports, delivery outbox and tenant-scoped public digest projection.
 6. Replace navigation-heavy UX with an inbox, date archive and right-side floating panels.
 7. Provide a read-only legacy migration inspector and keep all live/data gates closed.
 
@@ -71,6 +71,7 @@ Documentation level: `controlled`
 
 ## Verification
 
-- Source evidence and `doc_drift`: README/config currently expose SQLite/MySQL/PostgreSQL, an embedded Redis
-  server and HTTP cascade, but do not define authoritative storage profiles or MQTT/outbox semantics; synchronize them.
+- Source evidence and `doc_drift`: README/config previously exposed SQLite/MySQL/PostgreSQL, an embedded Redis
+  server and HTTP cascade without authoritative storage profiles or MQTT/outbox semantics; the current docs now
+  define those boundaries and keep v1 behavior explicit.
 - Final document impact and synchronization owner: `project-current`, App Root.

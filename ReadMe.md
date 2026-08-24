@@ -79,6 +79,9 @@ A tool for subscribing to and managing WeChat Official Account content, providin
 - **Environment Exception Statistics**: Automatic tracking and statistics of environment exceptions when accessing WeChat articles
 - **Headers and Cookies Authentication**: Support custom headers and cookies in message tasks for authenticated webhook calls
 - **Configuration Cache**: Support Redis, Memcached, and memory caching for improved configuration read performance
+- **Intelligence Hub (v2)**: tenant-safe topic/relevance filters, feedback learning, dated digests,
+  per-article downloads, and Lite/Standard/Distributed storage profiles. Background jobs and live
+  collection remain disabled by default; see [Intelligence Hub v2](docs/intelligence-hub.md).
 
 
 # ❤️ Sponsorship
@@ -106,7 +109,7 @@ If you find We-MP-RSS helpful, feel free to buy me a beer!<br/>
 The project adopts a front-end and back-end separation architecture:
 - Backend: Python + FastAPI
 - Frontend: Vue 3 + Vite
-- Database: SQLite (default)/MySQL
+- Database: SQLite (default)/MySQL/PostgreSQL; Intelligence Hub production recommends PostgreSQL + Redis, with MQTT only for distributed events
 <img src="docs/架构原理.png" alt="Architecture Diagram" width="80%"/>
 
 For more project principles, please refer to the [Project Documentation](https://deepwiki.com/rachelos/we-mp-rss/3.5-notification-system).
@@ -260,5 +263,4 @@ The following are the environment variable configurations supported in `config.y
 | `LOG_FILE` | Empty | Log file path |
 | `LOG_LEVEL` | `INFO` | Log level |
 | `EXPORT_PDF` | `False` | Whether to enable PDF export functionality |
-
 

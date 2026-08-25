@@ -1,0 +1,48 @@
+# We-MP-RSS Technical Details
+
+Tool: Codex App
+Date: 2026-08-25
+
+## Sync Rule
+
+Update when a maintained entrypoint, storage contract, integration boundary, key workflow or focused verification route changes. Database-specific facts also update [AI-DB project memory](../ai-db/project-memory/README.md).
+
+## Request And Work Path
+
+```text
+main.py
+  -> web.py / FastAPI
+  -> apis/ and views/
+  -> core/ legacy services and core/intelligence/ v2 services
+  -> SQLAlchemy database (durable truth)
+  -> optional Redis coordinator/cache
+  -> durable outbox -> optional MQTT transport
+  -> jobs/ scheduled collection, analysis, digest and delivery
+
+web_ui/src/
+  -> global layout
+  -> IntelligenceHub floating drawer
+  -> authenticated v2 APIs
+```
+
+## Module Index
+
+| Boundary | Mechanism | Source | Current note | Evidence |
+| --- | --- | --- | --- | --- |
+| Runtime entry | FastAPI with job/init flags | `main.py`, `web.py` | init paths can mutate configured DB | code, 2026-08-25 |
+| Legacy DB | SQLAlchemy engine/session | `core/db.py` | SQLite WAL; compatibility `ALTER TABLE`; `create_all` | code, 2026-08-25 |
+| Infrastructure profiles | lite/standard/distributed | `core/intelligence/settings.py` | SQLite; PostgreSQL+Redis; optional MQTT | code + document, 2026-08-25 |
+| Durable v2 model | `int_*` SQLAlchemy tables | `core/intelligence/models.py` | workspace, collection, AI, feedback, digest, export, jobs, outbox | code, 2026-08-25 |
+| Schema handoff | inspect/read and offline DDL render | `core/intelligence/migration.py`, `tools/intelligence_schema.py` | revision `intelligence-v2-20260824-1` | code + test receipt |
+| Eventing | coordinator + durable outbox | `core/intelligence/events.py`, `core/intelligence/outbox.py` | MQTT transports events; DB owns state | code + test receipt |
+| Content | SHA-256 local/S3 object store | `core/intelligence/storage.py` | DB stores object identity, not provider URL as sole truth | code, 2026-08-25 |
+| APIs | tenant-aware v2 endpoints | `apis/intelligence.py` | article/analysis/feedback/digest/download | code + test receipt |
+| UI | Vue floating management | `web_ui/src/components/intelligence/IntelligenceHub.vue` | global drawer; no extra management route | code + build receipt |
+| Operators | profile/config/compose docs | `config.example.yaml`, `compose/docker-compose.intelligence.yaml`, `docs/intelligence-hub.md` | real services remain deployment-gated | document + static parse |
+
+## Known Runtime Boundary
+
+- `core/db.py` startup can create a SQLite file, run compatibility DDL and create tables. Do not treat server startup as read-only.
+- The Controlled verification used disposable databases and offline DDL; it did not inspect or mutate a user database.
+- PostgreSQL, Redis, MQTT and provider connectivity remain unverified in an authorized staging environment.
+- Current batch-export/MCP/provider gaps remain classified in the [migration matrix](../../docs/migrations/wechat-download-api.md).

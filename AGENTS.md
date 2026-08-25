@@ -1,3 +1,16 @@
+# We-MP-RSS AI Adapter
+
+Tool: tool-neutral (Codex, Claude, Grok, and any CodeNote-routed agent)
+
+Initialize once: reuse the injected [CodeNote master](../CzzProj/CodeNote/AiRef/VibePractice/Vibe_Rules/VibeAi.md), then read the [project rule index](vibe/rules/README.md). [CLAUDE.md](CLAUDE.md) is an equivalent discovery router.
+
+- For Standard/Controlled, DB/data, cross-repository or deploy-gated work, load [documentation rules](vibe/rules/documentation.md), the [process hub](vibe/specs/PROJECT_STATUS.md) and current [Controlled Spec](docs/tasks/260824-wechat-intelligence-hub/spec.md).
+- Before schema, migration, data-fix, route or SQL work, load the [AI-DB entry](vibe/ai-db/README.md). Load only the smallest matching owner/error record.
+- Runtime is FastAPI/Python + Vue/Vite + SQLAlchemy, with SQLite Lite, PostgreSQL+Redis Standard and optional MQTT Distributed profiles; DB/outbox remain authoritative.
+- Keep `config.yaml`, `.env`, `data/`, tokens, cookies, provider credentials and connection secrets local-only.
+- Agents may render offline DDL but never execute DB mutations/migrations, live/paid provider actions, deploy/publish/push, credential writes or destructive cleanup without the applicable gate. Mutation SQL is a human/DBA handoff.
+- Preserve unrelated work and behavior; closeout states verification, memory routing and process-document status.
+
 # Repository Guidelines
 
 ## Project Structure & Module Organization

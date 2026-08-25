@@ -17,6 +17,7 @@ Last synchronized: 2026-08-25
 | 6 | [SupSub 核验](research/supsub-integration.md) | SupSub 当前能力、价格快照、风险和分阶段采用决定。 |
 | 7 | [连接器注册表](integrations/README.md) | 后续托管服务、Feed、付费 API、AI 和投递平台的统一接入契约。 |
 | 8 | [计划](tasks/260824-wechat-intelligence-hub/plan.md) · [任务台账](tasks/260824-wechat-intelligence-hub/tasks.md) · [验证](tasks/260824-wechat-intelligence-hub/verify.md) · [交接](tasks/260824-wechat-intelligence-hub/handoff.md) · [变更清单](tasks/260824-wechat-intelligence-hub/changes.md) | 执行与验收证据，不替代 Spec。 |
+| 9 | [CodeNote 项目规则](../vibe/rules/README.md) · [当前状态](../vibe/specs/PROJECT_STATUS.md) · [AI-DB](../vibe/ai-db/README.md) | Agent 项目路由、当前任务指针、数据库事实与人类/DBA 交接；不构成数据库执行授权。 |
 
 ## 仓库角色
 
@@ -38,8 +39,9 @@ Last synchronized: 2026-08-25
 ## 同步边界
 
 本次迁移同步的是原始需求、可复用行为、实现调研、数据映射、许可证结论和未完成门禁。以下内容
-不会复制进核心仓库：旧项目源码、Cookie/token、SQLite 数据、运行日志、旧仓库专属 AI 规则、历史
-任务过程噪声，以及把代理池或 TLS 指纹描述为规避平台限制的方案。
+不会复制进核心仓库：旧项目源码、Cookie/token、SQLite 数据、运行日志、旧仓库专属 AI 规则正文、
+历史任务过程噪声，以及把代理池或 TLS 指纹描述为规避平台限制的方案。核心仓自己的 CodeNote 短路由
+和 AI-DB 文档工作区由当前需求独立初始化，不继承旧项目的“无 AI-DB”结论。
 
 “文档已同步”只说明相关决定可从本索引追溯；具体能力是否已经交付，以迁移矩阵和验证记录中的状态
 为准。

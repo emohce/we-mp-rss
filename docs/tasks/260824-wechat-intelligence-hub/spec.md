@@ -13,7 +13,7 @@ Documentation level: `controlled`
 - Group owner: this `spec.md`
 - Task-root discovery prefix: `docs/tasks/260824-wechat-intelligence-hub/`
 - Durable document members: documentation index, raw requirement, spec, plan, tasks, verify, handoff, changes,
-  legacy migration matrix, integration registry and research evidence.
+  legacy migration matrix, integration registry, research evidence, project adapters/rules/status/knowledge and AI-DB memory.
 - Declared code/config dependencies: backend v2 modules, SQLAlchemy models, FastAPI router, Vue UI and config defaults.
 - Linked authorities: repository `AGENTS.md`, upstream README and `SECURITY.md`.
 - Excluded unrelated documents: upstream release notes and historical issue records.
@@ -31,11 +31,14 @@ Documentation level: `controlled`
     "docs/migrations",
     "docs/integrations",
     "docs/research/wechat-collection-landscape.md",
-    "docs/research/supsub-integration.md"
+    "docs/research/supsub-integration.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "vibe"
   ],
   "dependencies": ["core/intelligence", "apis/intelligence.py", "web_ui/src"],
-  "validators": ["local-markdown-links", "provider-evidence-freshness"],
-  "git_scope_prefixes": ["docs/README.md", "docs/tasks/260824-wechat-intelligence-hub", "docs/migrations", "docs/integrations", "docs/research"]
+  "validators": ["local-markdown-links", "provider-evidence-freshness", "codenote-project-audit", "project-catalog-resolution"],
+  "git_scope_prefixes": ["AGENTS.md", "CLAUDE.md", "vibe", "docs/README.md", "docs/intelligence-hub.md", "docs/tasks/260824-wechat-intelligence-hub", "docs/migrations", "docs/integrations", "docs/research"]
 }
 ```
 
@@ -65,6 +68,10 @@ Documentation level: `controlled`
   内容、不隐式触发微信或付费调用；远程图片补全必须显式展示网络与预算行为。
 - MCP 保留为后续需求。当前核心源码没有 MCP 运行入口；未来实现必须使用当前用户/工作区权限或
   受限 Access Key，不能继承旧项目的无鉴权 HTTP 或单用户静态 Token 边界。
+- 核心仓必须使用短 CodeNote 适配器和项目级 `vibe/` 路由，并在 CodeNote 稳定项目索引中登记；
+  现有上游仓库指南继续保留，跨项目规则只链接 CodeNote 权威，不复制规则正文。
+- 数据库事实、环境路由、schema 证据、SQL 候选与人类/DBA 交接统一进入 `vibe/ai-db/`。AI-DB
+  是非空文档/记忆工作区，不是连接器或执行器；Agent 不执行 DDL、DML、迁移、初始化或数据修复。
 
 ## Success Criteria
 
@@ -78,6 +85,8 @@ Documentation level: `controlled`
 - 新供应商在关闭 Feed/API 格式、认证、额度、合同和数据处理缺口前只能处于 `researched`，不能
   宣称已经集成或自动降级到该供应商。
 - 文档索引与旧项目迁移矩阵能从每项原始需求追到当前权威、实现状态、证据和剩余门禁。
+- CodeNote 项目审计、仓内链接和项目身份解析通过；AI-DB 能从存储档位追到环境路线、schema
+  期望、核心关系、业务术语和未关闭门禁，且不含凭据或未授权执行记录。
 
 ## Constraints
 
@@ -90,6 +99,8 @@ Documentation level: `controlled`
 - 外部服务不得成为文章、反馈、用户状态、任务或用量账本的唯一事实源；带密钥 Feed URL、OAuth
   token 和本地 CLI 凭据只能通过 secret reference 使用。
 - R2 外部写入、R3 额度消耗和 R4 不可逆/公开操作不能由无人值守计划任务隐式执行。
+- CodeNote catalog 只保存稳定 Git 身份和仓内 authority routes；绝对路径仅进入本机不跟踪的
+  workspace binding。AI-DB route 证据不构成连接、DryRun、执行、恢复、发布或生产授权。
 
 ## Prior Task Overlap
 
@@ -105,13 +116,13 @@ Documentation level: `controlled`
 
 ```yaml
 spec_id: WXI-001
-spec_revision: 4
+spec_revision: 5
 status: confirmed
-raw_sources: [RAW-001, RAW-002, RAW-003, RAW-004]
+raw_sources: [RAW-001, RAW-002, RAW-003, RAW-004, RAW-005]
 targets:
   - canonical_manifest: this-spec
     base_full_version: upstream-f54aba5
-    result_full_version: czz-main-v3
+    result_full_version: czz-main-v4
 delta:
   - requirement_id: WXI-STORAGE
     operation: modify
@@ -169,8 +180,22 @@ delta:
     raw_refs: [RAW-001, RAW-004]
     confirmation: explicit
     canonical_location: spec.md
+  - requirement_id: WXI-CODENOTE
+    operation: add
+    before: the core repository had only upstream general contribution guidance and no CodeNote project identity or route chain
+    after: preserve upstream guidance while adding tool-neutral adapters, project rules, current status and knowledge routes registered by stable CodeNote identity
+    raw_refs: [RAW-004, RAW-005]
+    confirmation: explicit
+    canonical_location: vibe/rules/README.md
+  - requirement_id: WXI-AI-DB
+    operation: add
+    before: database architecture existed in code/docs without a CodeNote-governed project DB memory and handoff workspace
+    after: a populated AI-DB workspace owns environment routing, expected schema, DB glossary/relations, task templates and explicit human/DBA mutation boundaries
+    raw_refs: [RAW-002, RAW-005]
+    confirmation: explicit
+    canonical_location: vibe/ai-db/README.md
 memory_used: [wechat-collection-research-and-supsub-baseline]
-memory_updates: [project-error-memory:sqlite-memory-pool-routing]
+memory_updates: [project-error-memory:sqlite-memory-pool-routing, codenote-error-memory:python-unittest-absolute-file-path-module-resolution, codenote-error-memory:zsh-scalar-file-list-not-word-split]
 open_questions: []
 ```
 
@@ -195,6 +220,9 @@ open_questions: []
   authorizing a SupSub installation, login, purchase or protected API call.
 - RAW-004 is additive documentation synchronization plus implementation-state clarification. It does not authorize
   legacy source copying, database migration, live calls or completion claims for partial/planned capabilities.
+- RAW-005 is additive governance initialization. It keeps the Controlled Spec under `docs/tasks`, registers the new
+  core without replacing the legacy project identity, and creates project-local AI-DB memory without authorizing a
+  database connection, application initialization, DDL/DML, migration, data repair or live infrastructure.
 
 ## Execution Authority
 
@@ -222,3 +250,6 @@ open_questions: []
 - Connector authority: [integration registry](../../integrations/README.md).
 - Documentation entry: [docs index](../../README.md).
 - Legacy requirements and implementation research: [migration matrix](../../migrations/wechat-download-api.md).
+- Project rule entry: [vibe/rules/README.md](../../../vibe/rules/README.md).
+- AI-DB authority and stable memory: [vibe/ai-db/README.md](../../../vibe/ai-db/README.md),
+  [project-memory](../../../vibe/ai-db/project-memory/README.md).

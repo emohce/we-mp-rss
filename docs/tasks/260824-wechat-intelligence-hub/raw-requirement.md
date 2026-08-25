@@ -64,9 +64,24 @@ privacy_boundary: no-verbatim-prompt-or-transcript
 可复用的行为完整迁移同步。同步结果需要可追溯，明确区分已实现、部分实现、待实现、仅供参考和
 已被后续需求否决的内容；不能把旧仓库文档存在的功能直接宣称为当前核心已经交付。
 
+## RAW-005
+
+```yaml
+raw_id: RAW-005
+captured_at: 2026-08-25
+state: active
+source_lineage: current-user-codenote-and-ai-db-initialization
+privacy_boundary: no-verbatim-prompt-or-transcript
+```
+
+用户要求核验新核心是否已经初始化 CodeNote 项目规则与 AI-DB 相关治理，并把这两类能力同步到
+`we-mp-rss` 核心目录。初始化必须保留现有仓库规则和当前 Controlled 需求权威，建立可被 CodeNote
+发现的项目路由、知识/状态枢纽和非空数据库记忆；AI-DB 只管理数据库事实、路线与人类/DBA 交接，
+不得被误解为允许 Agent 连接或修改数据库。
+
 ## Capture Boundary
 
 - Included: 产品范围、仓库角色、技术约束及其后续覆盖、交互方式、采集与限频、外部连接器、
-  原始需求/实现调研迁移、状态分类、验证和 Git 边界。
+  原始需求/实现调研迁移、CodeNote 项目路由、AI-DB 文档治理、状态分类、验证和 Git 边界。
 - Excluded: 对话逐字稿、工具输出、凭据、Cookie、隐藏推理。
 - Audio unavailable or unclear terms: `AR` 已按上下文确认为 AI 内容过滤。

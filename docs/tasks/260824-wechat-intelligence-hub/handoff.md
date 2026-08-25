@@ -10,15 +10,16 @@ Documentation level: `controlled`
 ## Control Plane Snapshot
 
 - Controller: `app-root`
-- Work-order version: 3
+- Work-order version: 4
 - Canonical plan: [plan.md](plan.md)
 - Canonical task ledger: [tasks.md](tasks.md)
-- Last material event: WU-8 legacy documentation migration accepted; WU-7 SupSub runtime canary remains deferred.
+- Last material event: WU-9 CodeNote + AI-DB initialization accepted; WU-7 SupSub runtime canary remains deferred.
 
 ## Current State
 
 - Core repository is on local `czz-main`, based on upstream `f54aba5` and containing split local commits through
-  `fd666a7` before the RAW-004 documentation migration batch.
+  `5a94de0`; the RAW-005 CodeNote/AI-DB initialization is verified but intentionally uncommitted because the latest
+  user message did not renew commit authorization.
 - `Wechat2RSS` is a read-only local reference at `0416ecf`.
 - Legacy repository retains rollback branch and stash; its `czz-main` has three local documentation commits.
 - No live provider, credential, user database, deployment or push action has occurred.
@@ -28,6 +29,8 @@ Documentation level: `controlled`
   installation or changing the accepted core implementation.
 - RAW-004 makes this core repository the only current documentation home and classifies every relevant donor
   behavior. It corrects MCP to `planned` and batch export to `partial-current` rather than claiming full parity.
+- RAW-005 initializes the core's own CodeNote route chain and populated AI-DB documentation/memory workspace. The
+  CodeNote catalog keeps `wechat-download-api` and `we-mp-rss` as separate stable identities; no DB action is implied.
 
 ## Completed
 
@@ -42,13 +45,15 @@ Documentation level: `controlled`
 - Canonical [documentation index](../../README.md) and
   [legacy requirement/implementation migration matrix](../../migrations/wechat-download-api.md), including data,
   license, security and not-yet-implemented boundaries.
+- CodeNote adapters, project rules, status/knowledge routes, stable project catalog/binding, and a 15-file populated
+  [AI-DB workspace](../../../vibe/ai-db/README.md) with environment/schema/business/recovery boundaries.
 
 ## Documentation Impact
 
 - Authority refs: repository rules, upstream source, approved plan and research evidence.
-- `doc_drift`: reconciled; the previous implied v1 MCP availability and undifferentiated legacy migration claim are
-  corrected across Spec, operator, research and process documents.
-- Final impact: `project-current`.
+- `doc_drift`: reconciled; the previous missing project route/AI-DB owner is now synchronized without copying the old
+  repository's no-AI-DB constraint or CodeNote owner bodies.
+- Final impact: `requirement-canonical + project-current`; CodeNote catalog/error-memory projections are linked siblings.
 - Verification boundary: static/offline evidence accepted; runtime acceptance remains separate.
 
 ## Open Runtime Gates
@@ -61,9 +66,11 @@ Documentation level: `controlled`
 - Run browser/accessibility acceptance, notification delivery checks and deployment acceptance.
 - Implement and verify tenant-scoped Feed/MCP only as separate work; extend the current batch exporter with
   date/window/incremental scope, HTML/EPUB and explicit no-hidden-provider-call behavior rather than copying donor code.
+- For database work, create a canonical AI-DB task and resolve a user-approved read-only staging route first; app
+  startup with initialization, generated DDL, migration runners and data repair remain human/DBA-gated mutations.
 
 ## Next Safe Step
 
 - For product implementation, take one planned/partial row from the migration matrix and create a scoped acceptance
-  slice. For SupSub, the next safe step remains a user-supplied test Feed/OPML sample or separately authorized test
-  account—not a production sync.
+  slice. For DB validation, the next safe step is a separately approved read-only staging schema inspection; for
+  SupSub, use a user-supplied Feed/OPML fixture or separately authorized test account—not a production sync.

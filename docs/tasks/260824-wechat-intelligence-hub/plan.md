@@ -23,8 +23,9 @@ Documentation level: `controlled`
   affected Vue type/build, migration dry-run, provider primary-source evidence and route/link checks.
 - Verification-command provenance: `incoming-plan-reconciled`
 - Full-suite escalation trigger: `none`; unrelated upstream suites remain excluded.
-- 2026-08-25 delta: reuse the existing Controlled task and synchronize only the donor-document net delta; no runtime,
-  database, credential, deployment or remote action is in scope.
+- 2026-08-25 deltas reuse the existing Controlled task: first synchronize the donor-document net delta, then
+  initialize the core CodeNote route chain and a populated AI-DB documentation workspace. No runtime, database
+  connection/mutation, credential, deployment or remote action is in scope.
 
 ## Summary
 
@@ -44,6 +45,10 @@ Documentation level: `controlled`
 10. Require dated verification receipts so later services can be evaluated without creating incompatible paths.
 11. Index all current product/research/process documents and reconcile the old download API behavior against actual
     core source as implemented, partial, planned, reference-only or superseded.
+12. Preserve upstream contributor guidance while adding CodeNote adapters, project rules, a compact current-status
+    router and knowledge routes registered to the new core identity.
+13. Populate AI-DB environment/schema/business memory and task/session handoff templates without connecting to or
+    modifying a database.
 
 ## Delegation Decision
 
@@ -66,6 +71,7 @@ Documentation level: `controlled`
 | WU-6 Connector revision | app-root | research/docs | main-only | accepted v2 | public evidence only | registry, template and SupSub adoption decision | app-root | no runtime binding |
 | WU-7 SupSub canary | app-root | future adapter/runtime | main-only | WU-6 + user gate | test account, one-way read first | fixture contract then bounded canary | app-root | disable connector |
 | WU-8 Legacy documentation migration | app-root | research/docs | main-only | accepted WU-1..6 | donor docs and read-only current source; no source/data copy | index, migration matrix and synchronized Controlled owners | app-root | preserve donor as reference-only |
+| WU-9 CodeNote + AI-DB initialization | app-root | rules/docs/catalog | main-only | WU-8 accepted + RAW-005 | core adapters/`vibe`; CodeNote stable catalog/local binding; no DB/runtime | audited project route, populated AI-DB memory and synchronized Controlled owners | app-root | remove only task-owned initialization files/entries |
 
 ## Sidecar Strategy
 
@@ -87,6 +93,10 @@ Documentation level: `controlled`
   allowlists and risk gates are required before any adapter implementation.
 - A legacy README can overstate current equivalence. Every migrated capability must be checked against the actual
   core source, and partial/planned work must remain visible rather than being collapsed into “migrated”.
+- Blindly copying the old project's adapter would incorrectly suppress AI-DB, while copying CodeNote rule bodies or
+  absolute paths would create drift. Routes must be short, relative-link audited and registered under a new identity.
+- Schema/model code can be mistaken for live DB truth. AI-DB memory must label code/offline evidence and keep live
+  route, mutation, recovery and production gates explicit.
 
 ## Verification
 
@@ -97,4 +107,6 @@ Documentation level: `controlled`
   limits are not copied into runtime defaults.
 - RAW-004 migration evidence is isolated in a repository index and capability matrix. Link, Git-boundary, keyword
   consistency and source-presence checks replace unrelated backend/frontend reruns for this docs-only delta.
+- RAW-005 evidence uses the CodeNote project audit, workspace resolver/catalog checks, repository-local link/JSON
+  validation, scoped secret scanning and DB-boundary statement checks; application or infrastructure startup is excluded.
 - Final document impact and synchronization owner: `project-current`, App Root.

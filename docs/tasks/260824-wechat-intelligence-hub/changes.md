@@ -13,6 +13,7 @@ Updated: 2026-08-25
 | Documentation closeout | `13057d4` | 12 | 同步 README、运维架构、研究、验证、错误记忆和交接边界。 |
 | Provider integration revision | `fd666a7` | 12 | 增加通用连接器注册表、SupSub 核验和 RAW-003。 |
 | Legacy documentation migration | current docs batch | 13 | 增加总索引、旧项目迁移矩阵和 RAW-004，并同步所有当前权威。 |
+| CodeNote / AI-DB initialization | current governance batch | scoped docs/rules | 保留上游指南，登记新核心身份，增加项目路由、知识/状态枢纽、非空 AI-DB 与 RAW-005。 |
 
 ## 2. 交付物清单
 
@@ -32,6 +33,11 @@ Updated: 2026-08-25
 | `docs/tasks/260824-wechat-intelligence-hub/` | 更新 | 增加 RAW-004、Spec revision 4、WU-8 及对应验证/交接证据。 |
 | `docs/intelligence-hub.md` / `docs/research/wechat-collection-landscape.md` | 更新 | 收敛旧行为状态并纠正 MCP/批量导出的实现表述。 |
 | `ReadMe.md` / `README.zh-CN.md` | 更新 | 暴露需求、调研和迁移文档总入口。 |
+| `AGENTS.md` / `CLAUDE.md` / `vibe/rules/` | 新增/更新 | CodeNote 短适配器与项目规则；不复制全局 owner 正文。 |
+| `vibe/specs/` / `vibe/knowledge/` | 新增 | 当前任务路由、技术地图、ADR/错误记忆入口。 |
+| `vibe/ai-db/` | 新增 | 15 个非空规则、模板和稳定 DB 记忆文件；不含凭据或执行授权。 |
+| CodeNote project catalog / local binding / status | 更新 | `we-mp-rss` 独立稳定身份、本机路径与当前状态；保留旧项目条目。 |
+| CodeNote error memory | 更新 | 复用 unittest 记录并新增 zsh 数组陷阱；未吸收其他任务的 Skill/rule-state 漂移。 |
 
 ## 3. 逐批清单
 
@@ -42,6 +48,8 @@ Updated: 2026-08-25
 - `13057d4`：12 个文件，341 行新增、54 行删除。
 - `fd666a7`：12 个文档文件，增加通用连接器与 SupSub 需求/研究同步。
 - current docs batch：13 个文档文件，315 行新增、30 行删除。
+- current governance batch：核心仅规则/文档；CodeNote 仅项目索引/状态/测试断言/错误记忆/生成清单；
+  `workspace.local.json` 为本机不跟踪绑定，所有业务代码、数据库和运行时均排除。
 
 ## 4. 明确没做的
 
@@ -54,6 +62,9 @@ Updated: 2026-08-25
 | SupSub 安装、登录、购买、同步、精读和分享 | 0 | 本轮仅扩充需求与公开证据。 |
 | 旧 AGPL 源码、凭据、SQLite 数据和仓库专属治理文档复制 | 0 | 只迁移需求、行为研究、数据映射和采用决定。 |
 | MCP、租户化 Feed、批量导出日期/增量/HTML/EPUB 补齐 | 0 | 已进入计划/部分实现清单，未伪装为本轮代码交付。 |
+| 数据库连接、schema 检查、DDL/DML、迁移、初始化、修复 | 0 | AI-DB 仅建立文档记忆与 DBA 交接边界。 |
+| FastAPI、Redis、MQTT、浏览器、Provider、部署和 push | 0 | 本轮是规则/文档静态初始化。 |
+| 并发出现的 `tools/fix_db.py` 变更 | 0 owned | 非本任务改动，不暂存、不验证、不提交。 |
 
 ## 5. 用户可见行为变化
 
@@ -69,6 +80,10 @@ Updated: 2026-08-25
 - SupSub 尚缺测试账号下的 Feed/OPML/API 字段、合同、配额与冲突证据，不能宣传为已集成。
 - 当前核心未发现 MCP 入口；现有批量导出未覆盖旧项目的全部范围/格式/本地只读契约，迁移矩阵已
   将两者分别标为 `planned` 和 `partial-current`。
+- 全仓 Markdown 深扫仍保留两个旧 Web UI 文档的 5 个失效链接和 `TROUBLESHOOTING_CASCADE.md`
+  的 11 个重复标题；均非本轮文件，项目规则/本轮文档链接无新增问题。
+- CodeNote master working view 另有一个由其他任务未跟踪 Skill 引起的确定性清单漂移；生成器产生的
+  外来 hunk 已撤回，`rule-state.json` 恢复到本任务前内容。
 
 ## 7. 回归数字
 
@@ -76,3 +91,4 @@ Updated: 2026-08-25
 - 数据库：3 个方言 DDL 均成功生成，每份 460 行。
 - 前端：Vite 生产构建通过；14/14 首页资源引用存在，构建资源树一致。
 - 分布式配置：Compose 解析通过；真实基础设施未连接。
+- CodeNote/AI-DB：项目审计通过，项目/路径解析 2/2，catalog 测试 14/14，AI-DB 结构 15/15。

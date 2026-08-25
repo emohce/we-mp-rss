@@ -24,6 +24,7 @@ Documentation level: `controlled`
 | WU-6 Connector revision | 1 | 1 | main | app-root | accepted | SupSub primary sources, generic registry and verification template reconciled | none | retain `researched` state |
 | WU-7 SupSub adapter/canary | 1 | 0 | future | app-root | deferred-by-scope | no install/login/account fixture | explicit implementation and external-action gate | start with Feed/CLI read-only fixture |
 | WU-8 Legacy documentation migration | 1 | 1 | main | app-root | accepted | donor/current source matrix, index, link and statement checks pass | runtime gaps remain explicit | keep core docs canonical |
+| WU-9 CodeNote + AI-DB initialization | 1 | 1 | main | app-root | accepted | project audit OK; resolver 2/2; catalog tests 14/14; AI-DB 15/15 populated | live DB/runtime excluded | keep staging inspection and mutation gates explicit |
 
 ## Execution Journal
 
@@ -42,6 +43,9 @@ Documentation level: `controlled`
 | E-011 | 2026-08-25 | WU-8 | app-root | requirement revision | scattered donor evidence -> RAW-004 / Spec revision 4 | user requests full document and research migration into the core directory | reuse Controlled task; migrate semantics, not source/data |
 | E-012 | 2026-08-25 | WU-8 | app-root | doc drift correction | implied v1 MCP / undifferentiated legacy feature set -> explicit states | current core has RSS and partial bulk export but no MCP runtime | accept matrix; retain MCP and export gaps as planned/partial |
 | E-013 | 2026-08-25 | WU-8 | app-root | accepted | documentation sync -> accepted | index, migration matrix, source boundary, local links, diff and sensitive-pattern checks | create one local docs commit; no push |
+| E-014 | 2026-08-25 | WU-9 | app-root | requirement revision | accepted revision 4 -> RAW-005 / revision 5 | user requests CodeNote rules and AI-DB synchronization into the new core | reuse Controlled task; initialize project-local routes and memory |
+| E-015 | 2026-08-25 | WU-9 | app-root | implemented | absent -> local initialization | old adapter's no-AI-DB constraint rejected; current code/docs used to populate DB memory | run project/catalog/link/secret/static boundary audits |
+| E-016 | 2026-08-25 | WU-9 | app-root | accepted | verification -> accepted | CodeNote project audit, exact resolver routes, catalog tests, populated workspace, JSON/link/diff/secret boundaries; no DB/runtime action | keep reviewable; commit only on a new explicit current-message request |
 
 ## Checklist
 
@@ -59,3 +63,6 @@ Documentation level: `controlled`
 - [x] Add a canonical documentation index and legacy capability/data migration matrix.
 - [x] Correct MCP to `planned` and retain batch export as `partial-current` until its remaining contract is built.
 - [x] Keep AGPL source, credentials, runtime data and old repository-only governance documents out of the core.
+- [x] Preserve upstream `AGENTS.md` guidance while adding CodeNote adapters and project-local rule routes.
+- [x] Populate AI-DB route/schema/business memory and handoff templates without connecting to a database.
+- [x] Pass the CodeNote project/catalog/link/JSON/secret/static-boundary audit and accept WU-9.

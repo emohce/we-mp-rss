@@ -6,6 +6,8 @@ Intelligence Hub 是 `we-mp-rss` 的增量智能聚合层。它复用现有文�
 
 当前需求、研究、迁移和验证入口见[文档索引](README.md)。旧 `wechat-download-api` 的功能不会整体
 复制；每项采用状态见[原始需求与实现调研迁移矩阵](migrations/wechat-download-api.md)。
+数据库事实、环境路线和 SQL/迁移交接统一进入 [AI-DB 工作区](../vibe/ai-db/README.md)；该目录只是
+文档与记忆，不保存凭据，也不授权 Agent 执行数据库写操作。
 
 > 当前代码和离线迁移工具已经交付，但默认不开启后台任务和真实采集。执行现有数据库迁移、写入
 > 凭据、启用微信或付费接口、启动 Redis/MQTT、部署服务仍需单独确认。
@@ -155,7 +157,8 @@ python tools/intelligence_schema.py ddl --dialect postgresql
 
 检查结果会列出缺失/意外表和列，但不会输出连接 URL。实际 DDL、`-init True`、数据回填或
 PostgreSQL 切换都属于数据库写操作，必须先备份并由用户/DBA 单独批准。代码验证不能替代真实
-数据库、Redis/MQTT、微信授权、浏览器、部署或生产验收。
+数据库、Redis/MQTT、微信授权、浏览器、部署或生产验收。新的 DB 调研、schema 核验或迁移候选
+必须从 [AI-DB 任务规则](../vibe/ai-db/ai-db-tasks/rules.md)创建独立交接包。
 
 采集原理、已核验限制、付费 API 与开源边界见
 [微信公众号采集路线与开源边界](research/wechat-collection-landscape.md)。

@@ -1,6 +1,7 @@
 # 微信公众号采集路线与开源边界
 
 Last verified: 2026-08-24
+Legacy document sync verified: 2026-08-25
 
 ## 结论与证据等级
 
@@ -16,6 +17,9 @@ Last verified: 2026-08-24
   2026-08-24 页面显示普通请求 $0.01、缓存结果 $0.0005；价格会变，部署前必须重新核对。
 - **托管聚合服务确认**：SupSub 提供公众号/网站/X 聚合、RSS/Atom/JSON 输出、OPML 迁移、关注点
   和 CLI；它是独立托管连接器，不是微信官方历史文章 API，也不能作为规避限频的账户池。
+- **旧项目源码/文档确认**：`wechat-download-api@043c2f9` 提供扫码授权、公众号搜索/列表、RSS、
+  本地增量 Feed、七格式整号导出、图片代理、通知和 MCP；其本地 `czz-main` 的应用 README 未偏离
+  `origin/main`。这些事实只证明旧实现存在，不证明当前核心已全部实现或真实运行通过。
 - **明确推断**：未发现微信为“任意公众号历史文章”提供官方、稳定、可购买的统一额度。可观测的
   风控码和等待时间只能用于保守状态机，不能宣传为官方 SLA 或精确日限额。
 
@@ -38,6 +42,7 @@ Last verified: 2026-08-24
 - 付费接口：[AIDATA 文章列表](https://aidata.vip/zh-cn/api/endpoints/weixin/mp/article/list)。
 - 托管聚合：[SupSub 定价](https://supsub.net/#pricing)、[SupSub CLI](https://github.com/SupSub-AI/supsub-cli)；详细采用决策见 [SupSub 核验](supsub-integration.md)。
 - 开源参考：[`cooderl/wewe-rss`](https://github.com/cooderl/wewe-rss)、[`wechat-article-exporter`](https://github.com/wechat-article/wechat-article-exporter/issues/200)、[`wx-kit`](https://github.com/monkeychen/wx-kit/blob/main/AGENTS.md)、[`wechat-mp-article-list`](https://github.com/Alex-giao/wechat-mp-article-list/blob/main/references/backend-workflow.md)。
+- 旧行为来源：[`emohce/wechat-download-api@043c2f9`](https://github.com/emohce/wechat-download-api/tree/043c2f9828401220a00b7b125686b334581745e0)；采用与缺口见[迁移矩阵](../migrations/wechat-download-api.md)。
 
 ## 限频原则
 
@@ -48,6 +53,18 @@ Last verified: 2026-08-24
 - 只有页面结果成功落库后推进游标；认证失败禁用账户并持久记录错误，通知属于后续可选投递能力。
 - 共享同一后台凭据的工作区共用一个总预算和来源任务；落库后再做工作区扇出，不能通过创建用户
   或账户别名重复消耗上游接口。
+
+## 旧实现调研的采用边界
+
+- 可复用行为：搜索/列表、授权失效通知、Feed、多格式导出、图片代理、增量游标和本地读取不变量。
+- 需要重构：旧单用户/无鉴权边界改为当前用户、Access Key 和工作区权限；旧 SQLite 表映射到全局
+  文章实体、工作区关联、持久任务/游标和 outbox。
+- 只作证据：旧项目的 4 天凭据、24h/6h 通知点、验证计数 8、页间 2–4 秒、固定导出上限等都是
+  项目策略或实现参数，不是微信官方 SLA。
+- 明确不采用：代理池轮换、账户轮换、验证码绕过或 TLS 指纹“对抗封控”的产品目标。允许的网络
+  代理只能解决可达性，并仍受统一预算、退避和平台规则约束。
+- 当前核心的 MCP 尚未实现，批量导出只部分覆盖旧能力；详情和数据映射由
+  [旧项目迁移矩阵](../migrations/wechat-download-api.md)持有。
 
 ## 后台存储与消息架构
 

@@ -2,6 +2,7 @@
 
 Tool: Codex App
 Date: 2026-08-24
+Updated: 2026-08-25
 Spec: [spec.md](spec.md)
 Source format: `chat-requirement-summary`
 Capture fidelity: `normalized-material-requirement`
@@ -49,9 +50,23 @@ privacy_boundary: no-verbatim-prompt-or-transcript
 需求，并把本次核验沉淀为可继续接入更多服务的通用方式。外部服务不能取代 `we-mp-rss` 核心；
 未来集成需要可验证、可分阶段启用，并明确认证、费用、限额、同步冲突、不可逆操作和隐私边界。
 
+## RAW-004
+
+```yaml
+raw_id: RAW-004
+captured_at: 2026-08-25
+state: active
+source_lineage: current-user-document-migration-sync
+privacy_boundary: no-verbatim-prompt-or-transcript
+```
+
+用户要求确认所有相关文档均已更新到新的核心项目目录，并把此前的原始需求、实现调研和旧项目中
+可复用的行为完整迁移同步。同步结果需要可追溯，明确区分已实现、部分实现、待实现、仅供参考和
+已被后续需求否决的内容；不能把旧仓库文档存在的功能直接宣称为当前核心已经交付。
+
 ## Capture Boundary
 
 - Included: 产品范围、仓库角色、技术约束及其后续覆盖、交互方式、采集与限频、外部连接器、
-  验证和 Git 边界。
+  原始需求/实现调研迁移、状态分类、验证和 Git 边界。
 - Excluded: 对话逐字稿、工具输出、凭据、Cookie、隐藏推理。
 - Audio unavailable or unclear terms: `AR` 已按上下文确认为 AI 内容过滤。

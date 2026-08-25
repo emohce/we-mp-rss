@@ -84,7 +84,8 @@ docker run -d  --name we-mp-rss  -p 8001:8001 -v ./data:/app/data  docker.1ms.ru
 - **配置缓存**：支持Redis、Memcached和内存缓存，提升配置读取性能
 - **智能聚合浮窗（v2）**：工作区隔离、AI主题/相关度过滤、反馈学习、日期日报、单篇下载，
   并提供 SQLite Lite、PostgreSQL + Redis Standard、PostgreSQL + Redis + MQTT Distributed 档位。
-  后台任务和真实采集默认关闭，详见 [Intelligence Hub v2](docs/intelligence-hub.md)。
+  后台任务和真实采集默认关闭，详见 [Intelligence Hub v2](docs/intelligence-hub.md)和
+  [需求、调研与迁移文档索引](docs/README.md)。
 
 
 # ❤️ 赞助

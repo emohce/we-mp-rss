@@ -81,7 +81,8 @@ A tool for subscribing to and managing WeChat Official Account content, providin
 - **Configuration Cache**: Support Redis, Memcached, and memory caching for improved configuration read performance
 - **Intelligence Hub (v2)**: tenant-safe topic/relevance filters, feedback learning, dated digests,
   per-article downloads, and Lite/Standard/Distributed storage profiles. Background jobs and live
-  collection remain disabled by default; see [Intelligence Hub v2](docs/intelligence-hub.md).
+  collection remain disabled by default; see [Intelligence Hub v2](docs/intelligence-hub.md) and the
+  [requirements, research, and migration index](docs/README.md).
 
 
 # ❤️ Sponsorship
@@ -263,4 +264,3 @@ The following are the environment variable configurations supported in `config.y
 | `LOG_FILE` | Empty | Log file path |
 | `LOG_LEVEL` | `INFO` | Log level |
 | `EXPORT_PDF` | `False` | Whether to enable PDF export functionality |
-

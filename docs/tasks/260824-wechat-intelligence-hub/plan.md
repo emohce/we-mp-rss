@@ -2,6 +2,7 @@
 
 Tool: Codex App
 Date: 2026-08-24
+Updated: 2026-08-25
 Task: wechat-intelligence-hub
 
 Documentation level: `controlled`
@@ -22,6 +23,8 @@ Documentation level: `controlled`
   affected Vue type/build, migration dry-run, provider primary-source evidence and route/link checks.
 - Verification-command provenance: `incoming-plan-reconciled`
 - Full-suite escalation trigger: `none`; unrelated upstream suites remain excluded.
+- 2026-08-25 delta: reuse the existing Controlled task and synchronize only the donor-document net delta; no runtime,
+  database, credential, deployment or remote action is in scope.
 
 ## Summary
 
@@ -39,6 +42,8 @@ Documentation level: `controlled`
 9. Treat SupSub as an optional secondary Feed/discovery/subscription/enrichment connector; keep runtime binding,
    OAuth, purchase, quota use and external writes behind later gates.
 10. Require dated verification receipts so later services can be evaluated without creating incompatible paths.
+11. Index all current product/research/process documents and reconcile the old download API behavior against actual
+    core source as implemented, partial, planned, reference-only or superseded.
 
 ## Delegation Decision
 
@@ -60,6 +65,7 @@ Documentation level: `controlled`
 | WU-5 Closeout | app-root | docs/tests | main-only | WU-1..4 | no deploy/push/data mutation | evidence and local commits | app-root | explicit residual gates |
 | WU-6 Connector revision | app-root | research/docs | main-only | accepted v2 | public evidence only | registry, template and SupSub adoption decision | app-root | no runtime binding |
 | WU-7 SupSub canary | app-root | future adapter/runtime | main-only | WU-6 + user gate | test account, one-way read first | fixture contract then bounded canary | app-root | disable connector |
+| WU-8 Legacy documentation migration | app-root | research/docs | main-only | accepted WU-1..6 | donor docs and read-only current source; no source/data copy | index, migration matrix and synchronized Controlled owners | app-root | preserve donor as reference-only |
 
 ## Sidecar Strategy
 
@@ -79,6 +85,8 @@ Documentation level: `controlled`
   identity, direction, cursor and billable operation is persisted locally.
 - SupSub CLI has external writes, quota-consuming AI work and public/non-revocable share behavior; command-level
   allowlists and risk gates are required before any adapter implementation.
+- A legacy README can overstate current equivalence. Every migrated capability must be checked against the actual
+  core source, and partial/planned work must remain visible rather than being collapsed into “migrated”.
 
 ## Verification
 
@@ -87,4 +95,6 @@ Documentation level: `controlled`
   define those boundaries and keep v1 behavior explicit.
 - RAW-003 provider evidence is isolated in dated research and a reusable verification template; volatile prices and
   limits are not copied into runtime defaults.
+- RAW-004 migration evidence is isolated in a repository index and capability matrix. Link, Git-boundary, keyword
+  consistency and source-presence checks replace unrelated backend/frontend reruns for this docs-only delta.
 - Final document impact and synchronization owner: `project-current`, App Root.

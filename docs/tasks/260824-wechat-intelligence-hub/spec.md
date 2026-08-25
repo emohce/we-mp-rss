@@ -2,6 +2,7 @@
 
 Tool: Codex App
 Date: 2026-08-24
+Updated: 2026-08-25
 Task: wechat-intelligence-hub
 
 Documentation level: `controlled`
@@ -11,8 +12,8 @@ Documentation level: `controlled`
 - Group key: `dsg:we-mp-rss:wechat-intelligence-hub-v1`
 - Group owner: this `spec.md`
 - Task-root discovery prefix: `docs/tasks/260824-wechat-intelligence-hub/`
-- Durable document members: raw requirement, spec, plan, tasks, verify, handoff, changes, integration registry and
-  research evidence.
+- Durable document members: documentation index, raw requirement, spec, plan, tasks, verify, handoff, changes,
+  legacy migration matrix, integration registry and research evidence.
 - Declared code/config dependencies: backend v2 modules, SQLAlchemy models, FastAPI router, Vue UI and config defaults.
 - Linked authorities: repository `AGENTS.md`, upstream README and `SECURITY.md`.
 - Excluded unrelated documents: upstream release notes and historical issue records.
@@ -25,20 +26,23 @@ Documentation level: `controlled`
   "group_key": "dsg:we-mp-rss:wechat-intelligence-hub-v1",
   "group_owner": "docs/tasks/260824-wechat-intelligence-hub/spec.md",
   "documents": [
+    "docs/README.md",
     "docs/tasks/260824-wechat-intelligence-hub",
+    "docs/migrations",
     "docs/integrations",
     "docs/research/wechat-collection-landscape.md",
     "docs/research/supsub-integration.md"
   ],
   "dependencies": ["core/intelligence", "apis/intelligence.py", "web_ui/src"],
   "validators": ["local-markdown-links", "provider-evidence-freshness"],
-  "git_scope_prefixes": ["docs/tasks/260824-wechat-intelligence-hub", "docs/integrations", "docs/research"]
+  "git_scope_prefixes": ["docs/README.md", "docs/tasks/260824-wechat-intelligence-hub", "docs/migrations", "docs/integrations", "docs/research"]
 }
 ```
 
 ## Requirement
 
-- `we-mp-rss` 是唯一可运行核心；`Wechat2RSS` 仅作公开行为参考。
+- `we-mp-rss` 是唯一可运行核心；`Wechat2RSS` 仅作公开行为参考，`wechat-download-api` 仅作旧需求、
+  行为、数据映射和实现研究来源。
 - 存储采用分档架构：Lite 为 SQLite，Standard 为 PostgreSQL + Redis，Distributed 在 Standard
   之上增加 MQTT；生产推荐 Standard，不能再把 SQLite-only 作为架构上限。
 - PostgreSQL 保存租户、文章元数据、反馈、游标、任务和 outbox；Redis 保存缓存、限频令牌、
@@ -53,18 +57,27 @@ Documentation level: `controlled`
   分级；SupSub 是首个样板连接器，但不进入默认运行时。
 - 连接器首版只读和单向同步优先，文章保留供应商来源与外部身份；订阅写回、按次计费、不可逆
   已读和公开分享需要逐项确认。
+- 旧项目相关需求和调研必须在核心仓库建立可追溯映射，并明确 `implemented-current`、
+  `partial-current`、`planned`、`reference-only` 或 `superseded`；不得把旧 README 当作当前完成证明。
+- 保留核心现有 RSS/Atom/JSON/Markdown Feed、通知、图片代理和异步批量导出；新增能力在现有路径上
+  收敛，不复制旧项目源码或创建第二套后台。
+- Intelligence Hub 的批量导出需补齐日期/时间窗/增量范围和统一审计，并保证默认只读本地持久化
+  内容、不隐式触发微信或付费调用；远程图片补全必须显式展示网络与预算行为。
+- MCP 保留为后续需求。当前核心源码没有 MCP 运行入口；未来实现必须使用当前用户/工作区权限或
+  受限 Access Key，不能继承旧项目的无鉴权 HTTP 或单用户静态 Token 边界。
 
 ## Success Criteria
 
 - v2 API、跨 SQLite/PostgreSQL 模型、Redis/MQTT 适配层、采集状态机、AI/反馈服务、日期摘要、
   单篇导出和浮窗 UI 可构建并有聚焦测试。
 - 任何采集失败都不会提前推进游标或无限扩张队列。
-- v2 文章、搜索、导出、摘要与公开分享投影都执行工作区校验；未改造的 v1 RSS/MCP 继续按
-  上游单用户边界运行，不被描述为 v2 多租户能力。
+- v2 文章、搜索、导出、摘要与公开分享投影都执行工作区校验；现有 v1 RSS 继续按当前核心边界
+  运行，不被描述为 v2 多租户能力。MCP 在实现和验证前保持 `planned`。
 - 旧 v1 行为仍可运行；新实现不复制 AGPL 或未授权的第三方源码。
 - 所有实现按主题拆为本地提交，不推送，不调用真实微信或付费接口。
 - 新供应商在关闭 Feed/API 格式、认证、额度、合同和数据处理缺口前只能处于 `researched`，不能
   宣称已经集成或自动降级到该供应商。
+- 文档索引与旧项目迁移矩阵能从每项原始需求追到当前权威、实现状态、证据和剩余门禁。
 
 ## Constraints
 
@@ -81,28 +94,30 @@ Documentation level: `controlled`
 ## Prior Task Overlap
 
 - Relationship: `reference-only`
-- Prior authority and verified state: `wechat-download-api/czz-main` 保存旧行为与文档，未迁移业务源码。
+- Prior authority and verified state: `wechat-download-api/czz-main@3e85bab` 保存旧行为与文档；应用
+  README 与 `origin/main@043c2f9` 一致，3 个领先提交仅为治理/知识文档，未迁移业务源码。
 - Document governance: 本任务文档只存在于核心仓库。
 - Execution logic verification / residual gates: 旧库 AGPL；仅可做行为和数据映射。
-- Traceability and net-new delta: 从单用户下载 API 收敛到核心仓库的多用户智能聚合系统。
+- Traceability and net-new delta: 从单用户下载 API 收敛到核心仓库的多用户智能聚合系统，并新增
+  [旧项目迁移矩阵](../../migrations/wechat-download-api.md)作为完整状态映射。
 
 ## Requirement Versioning
 
 ```yaml
 spec_id: WXI-001
-spec_revision: 3
+spec_revision: 4
 status: confirmed
-raw_sources: [RAW-001, RAW-002, RAW-003]
+raw_sources: [RAW-001, RAW-002, RAW-003, RAW-004]
 targets:
   - canonical_manifest: this-spec
     base_full_version: upstream-f54aba5
-    result_full_version: czz-main-v2
+    result_full_version: czz-main-v3
 delta:
   - requirement_id: WXI-STORAGE
     operation: modify
     before: global article state and optional external infrastructure
     after: tiered tenant-scoped durable state with SQLite Lite, PostgreSQL plus Redis recommended, and optional MQTT
-    raw_refs: [RAW-001]
+    raw_refs: [RAW-001, RAW-002]
     confirmation: explicit
     canonical_location: spec.md
   - requirement_id: WXI-UX
@@ -133,20 +148,44 @@ delta:
     raw_refs: [RAW-003]
     confirmation: explicit
     canonical_location: docs/research/supsub-integration.md
-memory_used: []
+  - requirement_id: WXI-LEGACY-DOCS
+    operation: add
+    before: legacy requirements and implementation research were distributed across a donor README and repository-only notes
+    after: one core documentation index and migration matrix classify every relevant behavior, data mapping, rejection and implementation gap
+    raw_refs: [RAW-001, RAW-004]
+    confirmation: explicit
+    canonical_location: docs/migrations/wechat-download-api.md
+  - requirement_id: WXI-BULK-EXPORT
+    operation: modify
+    before: current core asynchronous five-format export and legacy seven-format local-read behavior were not reconciled
+    after: extend the current exporter with date/window/incremental scope, audit and an explicit no-hidden-provider-call default
+    raw_refs: [RAW-001, RAW-004]
+    confirmation: explicit
+    canonical_location: docs/migrations/wechat-download-api.md
+  - requirement_id: WXI-MCP
+    operation: modify
+    before: RAW-001 named MCP while the Spec incorrectly implied a current v1 MCP runtime
+    after: MCP remains planned and must be tenant/workspace authorized when implemented
+    raw_refs: [RAW-001, RAW-004]
+    confirmation: explicit
+    canonical_location: spec.md
+memory_used: [wechat-collection-research-and-supsub-baseline]
 memory_updates: [project-error-memory:sqlite-memory-pool-routing]
 open_questions: []
 ```
 
 ## Requirement Change Review
 
-- Bounded scan scope / owners: upstream models, APIs, scheduler, Vue routes, README and security guidance.
+- Bounded scan scope / owners: upstream models, APIs, scheduler, Vue routes, README/security guidance, old project
+  README/technical details and current core RSS/export/notification/proxy/MCP source search.
 - Visible added: AI topics, feedback learning, dated digests, single-article multi-format export, tenant state,
   durable rate limits, PostgreSQL production profile, Redis coordination, MQTT event transport, a generic connector
   lifecycle and a SupSub integration decision.
 - Visible changed: SQLite-only is superseded by tiered storage; read/favorite state becomes per-user; management
-  moves into floating panels.
-- Visible removed/superseded: unbounded subscription backfill and new independent management pages.
+  moves into floating panels; legacy features now carry explicit current implementation states; the false implication
+  that current core already contains v1 MCP is corrected to `planned`.
+- Visible removed/superseded: unbounded subscription backfill, new independent management pages, unauthenticated
+  public HTTP inheritance and proxy/account/TLS-fingerprint routes described as limit-evasion mechanisms.
 - Classification: `direct-conflict` resolved by the later explicit current request; RAW-002 supersedes RAW-001's
   SQLite-only interpretation while preserving SQLite Lite compatibility.
 - Decision status: `explicit-current-request`.
@@ -154,6 +193,8 @@ open_questions: []
 - Post-sync rescan: completed; storage, UX and infrastructure decisions match the implementation and operator docs.
 - RAW-003 is additive: it expands future integration requirements without changing the accepted v2 runtime or
   authorizing a SupSub installation, login, purchase or protected API call.
+- RAW-004 is additive documentation synchronization plus implementation-state clarification. It does not authorize
+  legacy source copying, database migration, live calls or completion claims for partial/planned capabilities.
 
 ## Execution Authority
 
@@ -179,3 +220,5 @@ open_questions: []
 - Research evidence: [wechat-collection-landscape.md](../../research/wechat-collection-landscape.md).
 - SupSub evidence: [supsub-integration.md](../../research/supsub-integration.md).
 - Connector authority: [integration registry](../../integrations/README.md).
+- Documentation entry: [docs index](../../README.md).
+- Legacy requirements and implementation research: [migration matrix](../../migrations/wechat-download-api.md).

@@ -2,6 +2,7 @@
 
 Tool: Codex App
 Date: 2026-08-24
+Updated: 2026-08-25
 Task: wechat-intelligence-hub
 
 Documentation level: `controlled`
@@ -15,7 +16,8 @@ Documentation level: `controlled`
 - Affected modules / boundaries: SQLAlchemy metadata/dialects, storage profiles, Redis/MQTT coordination,
   new services/router, FastAPI registration, Vue layout/floating drawer and docs.
 - Checked: 39 backend tests, task-scoped Python compilation, three SQL dialect DDL renders, Compose parsing,
-  frontend production build, generated-asset integrity, source whitespace and sensitive-pattern checks.
+  frontend production build, generated-asset integrity, source whitespace and sensitive-pattern checks; the
+  2026-08-25 docs-only delta adds donor/current Git, local-link, source-presence and statement-consistency checks.
 - Skipped: live WeChat, paid API, AI CLI, Redis/MQTT connections, SMTP/Webhooks, browser acceptance, user or
   production database mutation, SupSub installation/login/protected calls, deployment and push.
 - Full-suite escalation: `none`.
@@ -33,6 +35,7 @@ Documentation level: `controlled`
 | Vue inbox/floating panels | browser bundle | routing/accessibility | production build and focused source/asset assertions | subjective visual acceptance | pass (build/static) |
 | migration inspector | admin handoff | legacy DB mapping | read-only fixture and offline DDL | actual migration gated | pass (offline) |
 | SupSub requirement revision | connector registry and future adapters | price/auth/quota/mutation drift | official page, public price response and official CLI source/docs | account canary and protected interfaces excluded | pass (research) |
+| legacy requirement/research migration | core docs and future backlog | false completion claims, license crossing and stale behavior | donor/current Git snapshot, focused source search, migration matrix, local links and diff | runtime/data migration excluded | pass (docs/static) |
 
 ## Evidence Receipts
 
@@ -62,6 +65,22 @@ Documentation level: `controlled`
 - Documentation closeout resolved 15 local links, parsed all 4 documentation-sync members and 2 validators, and
   received HTTP 200 from 7 selected SupSub product, price, repository and CLI documentation URLs.
 
+## Legacy Documentation Migration Receipt
+
+- Old `wechat-download-api/czz-main@3e85bab` is three documentation-only commits ahead of
+  `origin/main@043c2f9`; its application README is unchanged from that baseline.
+- Current core source confirms existing RSS/Atom/JSON/Markdown Feed, authorization notifications, proxy paths,
+  v2 single-article downloads and asynchronous MD/DOCX/JSON/CSV/PDF batch export.
+- No current FastMCP, `/mcp`, `ENABLE_MCP` or `MCP_TOKEN` source/config entry was found outside task/research docs;
+  the Spec was corrected from implied v1 availability to `planned`.
+- Existing batch export has page/selection scope but no reconciled date/window/incremental, HTML/EPUB or verified
+  default no-upstream-call contract, so it remains `partial-current`.
+- The documentation index, migration matrix, raw requirement, Spec, plan, ledger, verification, handoff, changes,
+  architecture guide, research document and both tracked root README entry points are in the synchronized sweep.
+- Validation covered 13 changed Markdown files and 56 repository-local links; all 6 documentation-sync members and
+  2 declared validators parsed, 7/7 focused source contracts were present, current MCP runtime hits were 0, and
+  `git diff --check` plus the scoped sensitive-pattern scan passed.
+
 ## Verified Failure And Recovery
 
 - `sqlite://` API-fixture initialization initially entered the service-database pool branch because SQLite detection only matched file URLs.
@@ -83,11 +102,14 @@ Documentation level: `controlled`
   large-chunk, direct-`eval` and ineffective-dynamic-import warnings; no broad dependency upgrade was attempted.
 - SupSub Feed URL/authentication, OPML conflict semantics, protected-interface quotas/SLA, deepread allowance,
   service/privacy terms and stable field fixtures remain unverified; its runtime state is therefore `researched`.
+- MCP implementation, tenant-scoped Feed/cursor behavior, batch-export date/incremental scope, HTML/EPUB formats and
+  remote-image/no-hidden-provider-call runtime tests remain explicit product gaps.
 
 ## Memory Decision
 
-- No relevant historical memory was used and no user/system memory was written. The verified SQLite URL routing
-  failure was captured in the repository error-memory path required by the error-memory workflow.
+- Existing task memory was used only to recover the 2026-08-24 collection/SupSub research boundary and was
+  rechecked against current local Git and documents. No memory was written. The earlier verified SQLite URL routing
+  failure remains captured in the repository error-memory path required by that prior workflow.
 
 ## Rule Declaration
 
@@ -95,5 +117,7 @@ Documentation level: `controlled`
 - Project entry: repository `AGENTS.md`.
 - Sidecar: main-only, not applicable.
 - Document routing: Controlled task folder plus project-current documentation.
+- Documentation impact: requirement-canonical plus project-current; index, migration, research and all Controlled
+  owners synchronized in one round.
 - High-risk gate: live calls, credentials, SupSub installation/OAuth/purchase/mutations/quota use, user DB mutation,
   deployment and push remain blocked.

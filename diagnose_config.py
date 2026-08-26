@@ -47,7 +47,8 @@ if parent_url:
         if parent_url.startswith('"'):
             print("原因: 配置值包含了多余的引号")
             print(f"  当前值: {parent_url}")
-            print(f"  应该是: {parent_url.strip('\"')}")
+            expected_url = parent_url.strip('"')
+            print(f"  应该是: {expected_url}")
         else:
             print("原因: URL格式不正确")
             print("应该是: http://localhost:8001 或 https://your-server.com")

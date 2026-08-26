@@ -5,7 +5,7 @@
 """
 from core.db import DB
 from core.config import cfg
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 from core.print import print_info, print_error, print_success
 
 def migrate():
@@ -17,7 +17,7 @@ def migrate():
 
     try:
         # 检查表是否存在
-        inspector = engine.dialect.get Inspector(engine)
+        inspector = inspect(engine)
         if 'message_tasks' not in inspector.get_table_names():
             print_error("message_tasks 表不存在，跳过迁移")
             return

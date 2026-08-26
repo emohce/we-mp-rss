@@ -46,6 +46,7 @@ Documentation level: `controlled`
 | E-014 | 2026-08-25 | WU-9 | app-root | requirement revision | accepted revision 4 -> RAW-005 / revision 5 | user requests CodeNote rules and AI-DB synchronization into the new core | reuse Controlled task; initialize project-local routes and memory |
 | E-015 | 2026-08-25 | WU-9 | app-root | implemented | absent -> local initialization | old adapter's no-AI-DB constraint rejected; current code/docs used to populate DB memory | run project/catalog/link/secret/static boundary audits |
 | E-016 | 2026-08-25 | WU-9 | app-root | accepted | verification -> accepted | CodeNote project audit, exact resolver routes, catalog tests, populated workspace, JSON/link/diff/secret boundaries; no DB/runtime action | keep reviewable; commit only on a new explicit current-message request |
+| E-017 | 2026-08-25 | WU-9 | app-root | accepted | verified-uncommitted -> committed | user renewed commit authorization; three local batches created, then history rebuilt to drop a host absolute path from `vibe/specs/PROJECT_STATUS.md` | keep `44198c3`/`0947b3c`/`f2987dd` local; safety refs retained; no push |
 
 ## Checklist
 

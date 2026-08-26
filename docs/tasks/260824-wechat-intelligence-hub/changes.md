@@ -12,8 +12,8 @@ Updated: 2026-08-25
 | Floating workspace | `754b846` | 237 | 增加全局右侧浮窗、API 绑定和经验证的生产构建产物。 |
 | Documentation closeout | `13057d4` | 12 | 同步 README、运维架构、研究、验证、错误记忆和交接边界。 |
 | Provider integration revision | `fd666a7` | 12 | 增加通用连接器注册表、SupSub 核验和 RAW-003。 |
-| Legacy documentation migration | current docs batch | 13 | 增加总索引、旧项目迁移矩阵和 RAW-004，并同步所有当前权威。 |
-| CodeNote / AI-DB initialization | current governance batch | scoped docs/rules | 保留上游指南，登记新核心身份，增加项目路由、知识/状态枢纽、非空 AI-DB 与 RAW-005。 |
+| Legacy documentation migration | `5a94de0` | 13 | 增加总索引、旧项目迁移矩阵和 RAW-004，并同步所有当前权威。 |
+| CodeNote / AI-DB initialization | `0947b3c` + `f2987dd` | 38 | 保留上游指南，登记新核心身份，增加项目路由、知识/状态枢纽、非空 AI-DB 与 RAW-005。 |
 
 ## 2. 交付物清单
 
@@ -47,8 +47,8 @@ Updated: 2026-08-25
 - `754b846`：237 个文件，2,349 行新增、1,776 行删除；主要为构建哈希资源换代。
 - `13057d4`：12 个文件，341 行新增、54 行删除。
 - `fd666a7`：12 个文档文件，增加通用连接器与 SupSub 需求/研究同步。
-- current docs batch：13 个文档文件，315 行新增、30 行删除。
-- current governance batch：核心仅规则/文档；CodeNote 仅项目索引/状态/测试断言/错误记忆/生成清单；
+- `5a94de0`：13 个文档文件，315 行新增、30 行删除。
+- `0947b3c`：29 个文件、814 行新增（AGENTS/CLAUDE/vibe 骨架）；`f2987dd`：9 个文件、159 行新增、26 行删除（台账同步）。核心仅规则/文档；CodeNote 仅项目索引/状态/测试断言/错误记忆/生成清单；
   `workspace.local.json` 为本机不跟踪绑定，所有业务代码、数据库和运行时均排除。
 
 ## 4. 明确没做的
@@ -64,7 +64,7 @@ Updated: 2026-08-25
 | MCP、租户化 Feed、批量导出日期/增量/HTML/EPUB 补齐 | 0 | 已进入计划/部分实现清单，未伪装为本轮代码交付。 |
 | 数据库连接、schema 检查、DDL/DML、迁移、初始化、修复 | 0 | AI-DB 仅建立文档记忆与 DBA 交接边界。 |
 | FastAPI、Redis、MQTT、浏览器、Provider、部署和 push | 0 | 本轮是规则/文档静态初始化。 |
-| 并发出现的 `tools/fix_db.py` 变更 | 0 owned | 非本任务改动，不暂存、不验证、不提交。 |
+| 并发出现的 `tools/fix_db.py` 变更 | 0 owned | 非本任务改动；已由独立提交 `44198c3` 单独修复与验证，未并入本批次。 |
 
 ## 5. 用户可见行为变化
 

@@ -18,8 +18,8 @@ Documentation level: `controlled`
 ## Current State
 
 - Core repository is on local `czz-main`, based on upstream `f54aba5` and containing split local commits through
-  `5a94de0`; the RAW-005 CodeNote/AI-DB initialization is verified but intentionally uncommitted because the latest
-  user message did not renew commit authorization.
+  `f2987dd`. The RAW-005 CodeNote/AI-DB initialization is committed as `0947b3c` plus ledger sync `f2987dd`; an
+  unrelated pre-existing `tools/fix_db.py` splice repair is committed separately as `44198c3`. Nothing is pushed.
 - `Wechat2RSS` is a read-only local reference at `0416ecf`.
 - Legacy repository retains rollback branch and stash; its `czz-main` has three local documentation commits.
 - No live provider, credential, user database, deployment or push action has occurred.

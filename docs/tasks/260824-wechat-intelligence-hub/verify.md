@@ -161,3 +161,15 @@ Documentation level: `controlled`
   deployment and push remain blocked.
 - Evolution Candidate: none; the two verified tool traps used existing error-memory governance and did not change
   application behavior, SQL policy, Hook/runtime configuration or product requirements beyond RAW-005.
+
+## v3 Remediation Evidence (2026-08-30)
+
+- Baseline: `czz-main@d44a41e`, two pre-existing verify/changes hunks preserved and excluded from new commits.
+- WU-10: seven-batch plan, explicit RAW-006 authority, exact file manifest and source-derived impact trace added;
+  scoped code-link audit and diff whitespace check passed. No application check was needed for this docs batch.
+- WU-11..16: pending; historical 39-test evidence does not validate freshness, daily coverage or ranking parity.
+- Automatic global router reports an oversized response owner and registry/loading-graph drift. The user permits
+  bypassing only that automatic check for this implementation turn; no global rule was changed.
+- Verification route: scoped docs plus isolated intelligence package contracts and affected frontend checks.
+  Real databases, online migration, provider accounts/spend, runtime services, deployment and push remain unrun.
+- Sidecar: main thread; no delegates. Memory route: project current/AI-DB documentation, no global memory write.

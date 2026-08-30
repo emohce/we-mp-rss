@@ -2,7 +2,7 @@
 
 Tool: Codex App
 Date: 2026-08-24
-Updated: 2026-08-25
+Updated: 2026-08-30
 Task: wechat-intelligence-hub
 
 Documentation level: `controlled`
@@ -28,6 +28,44 @@ Documentation level: `controlled`
   connection/mutation, credential, deployment or remote action is in scope.
 
 ## Summary
+
+### Active v3 remediation
+
+The current user confirmed D-1..D-7 and local commits. Reuse this task, baseline `d44a41e`; do not reset history,
+change other worktrees or absorb the two pre-existing verify/changes hunks. Runtime remains gated.
+
+| Batch / Work unit | Scope and invariant | Acceptance / fallback |
+| --- | --- | --- |
+| D-1 / WU-10 | Update requirement, plan, impact trace and incomplete v2 claims | Exact document manifest and links; preserve historic receipts |
+| D-2 / WU-11 | Frozen Alembic revisions, explicit initialization, checkpoints/runs/usage | Offline two-dialect render and isolated schema contracts; no live migration |
+| D-3 / WU-12 | Fresh-head polling, independent backfill, layered durable budgets, enqueue-only subscription | Fake multi-day provider and lease/rate regressions; collector may remain disabled |
+| D-4 / WU-13 | Daily source barrier, partial digests, late revisions and revisioned outbox | Fake-clock schedule/coverage/reconciliation tests; visible partial status |
+| D-5 / WU-14 | Shared ranking, topic rules, saved filters, local search/content/export | List/digest parity, explicit feedback and Markdown/storage regression tests |
+| D-6 / WU-15 | One floating workspace state, inline reader, persisted filters/width, explicit import | Focused state tests, typecheck/build; real browser acceptance remains separate |
+| D-7 / WU-16 | Capability-based read-only registry, fixture imports, operations status | Fixture and fail-closed contracts; no provider login, spend or external writes |
+
+### Provisional VerificationImpactTrace (2026-08-30)
+
+| Changed surface | Concrete consumer / affected boundary | Selected checks | Skipped / escalation |
+| --- | --- | --- | --- |
+| DB model and startup | collector, workflow, service queries, v2 API; legacy DB import | Frozen revision/offline DDL, no-startup-DDL test, isolated model/service tests | User DB and online migration never run; new consumer widens only its check |
+| collection checkpoints and budgets | daily scheduler -> leased job -> provider -> persisted visibility | Fake pages across dates, retry/lease/cooldown/budget tests | Live WeChat/Redis excluded |
+| digest run/revision | scheduled workflow -> digest -> share/outbox; list ranking shared | Coverage cutoff/late/idempotency and tenant tests | Email/webhook/MQTT network excluded |
+| preference/search/download | feedback -> list/digest; detail -> local content/export | Shared ranking, local FTS contract and HTML-to-Markdown tests | Paid AI, historical data migration excluded |
+| floating workspace | layout -> drawer -> API -> reader | UI state tests, affected semantic typecheck and production bundle | No backend/dev server launch; user-feel acceptance separate |
+| connectors/status | registry -> normalized page -> collection and health API | Vendor-shaped fixtures, capability/endpoint/provenance/error tests | No account, authentication, payment or publish |
+
+- Strategy: `main-only`, work budget `U`, child count `0`; coupled contracts and current Full Access keep writes
+  in Root. Each batch stays independently reviewable; split a batch further only for an atomicity/size boundary.
+- Skills: orchestration (scope/acceptance), git-batch-commit-push (local-only, hunk ownership), doc-memory-closeout
+  and document-code-link-audit (current-state synchronization). Use no unrequested global rule or memory writes.
+- User-authorized exception: skip only the broken automatic rule-router validation for this turn; all loaded
+  substantive rules and risk gates remain in force. No global rule repair is part of this task.
+- Documentation impact: `requirement-canonical + project-current`, Root owns updates and stale-claim sweep.
+- Full repository suite escalation: none. The intelligence package suite is in scope because all its persistence,
+  worker, service and API consumers are affected; unrelated upstream suites are not selected.
+
+### Historical v2 plan
 
 1. Establish tenant-safe portable SQLAlchemy models, PostgreSQL production storage, SQLite Lite compatibility,
    content-addressed storage and durable jobs/outbox.

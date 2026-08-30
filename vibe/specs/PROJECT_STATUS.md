@@ -1,7 +1,7 @@
 # We-MP-RSS Project Status
 
 Tool: Codex App
-Date: 2026-08-25
+Date: 2026-08-30
 
 ## Purpose
 
@@ -20,7 +20,7 @@ Compact project-current router. Durable product requirements and execution evide
 ## Current Focus
 
 - Repository: `we-mp-rss` (upstream `rachelos/we-mp-rss`), local branch `czz-main`, upstream baseline `f54aba5`.
-- Current task: `wechat-intelligence-hub`, Controlled revision 5 after CodeNote/AI-DB initialization synchronization.
+- Current task: `wechat-intelligence-hub`, Controlled revision 6, WU-10..16 correctness remediation in progress.
 - Runtime state: v2 foundation/backend/floating UI are present; live PostgreSQL/Redis/MQTT/provider/browser/deployment acceptance remains open.
 - Documentation state: the core repository is the canonical home for original requirements, implementation research, migration mapping, connector decisions and current process evidence.
 - Governance state: CodeNote adapters, project routes, knowledge hub and a populated AI-DB documentation workspace are initialized; no database operation was performed.
@@ -29,9 +29,9 @@ Compact project-current router. Durable product requirements and execution evide
 
 | Task | State | Authority | Verification | Main open gate |
 | --- | --- | --- | --- | --- |
-| WeChat intelligence core | `implemented-local / runtime-gated / unpushed` | [Spec](../../docs/tasks/260824-wechat-intelligence-hub/spec.md) | [39-test/build/static receipt](../../docs/tasks/260824-wechat-intelligence-hub/verify.md) | staging DB, providers, browser and deployment |
+| WeChat intelligence core | `v3-implementing / runtime-gated / unpushed` | [Spec](../../docs/tasks/260824-wechat-intelligence-hub/spec.md) | [historical v2 receipt; v3 pending](../../docs/tasks/260824-wechat-intelligence-hub/verify.md) | versioned schema, head polling, digest reconciliation and shared ranking |
 | SupSub adapter canary | `deferred-by-scope` | [research](../../docs/research/supsub-integration.md) | public evidence only | fixture/account and explicit external-action gate |
-| CodeNote + AI-DB initialization | `implemented-local / static-verified / uncommitted` | this hub + [AI-DB](../ai-db/README.md) | project/link/JSON/static audit | no live DB/runtime acceptance; commit needs a new explicit request |
+| CodeNote + AI-DB initialization | `committed-local / static-verified` | this hub + [AI-DB](../ai-db/README.md) | historical project/link/JSON/static audit | no live DB/runtime acceptance |
 
 ## Verification State
 

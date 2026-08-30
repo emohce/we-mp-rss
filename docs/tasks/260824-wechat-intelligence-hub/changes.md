@@ -92,3 +92,15 @@ Updated: 2026-08-25
 - 前端：Vite 生产构建通过；14/14 首页资源引用存在，构建资源树一致。
 - 分布式配置：Compose 解析通过；真实基础设施未连接。
 - CodeNote/AI-DB：项目审计通过，项目/路径解析 2/2，catalog 测试 14/14，AI-DB 结构 15/15。
+
+## 8. v3 整改增量 (2026-08-30)
+
+| 文件 | 本轮变化 |
+| --- | --- |
+| [raw-requirement](raw-requirement.md)、[Spec](spec.md) | RAW-006 明确七批实施与门禁，修正同步清单为确切文件 |
+| [plan](plan.md)、[tasks](tasks.md) | WU-10..16 顺序、调用链验收范围和未完成状态 |
+| [verify](verify.md)、[handoff](handoff.md) | 既有证据不等于 v3 验收，保留既存改动与当前恢复点 |
+| [当前状态](../../../vibe/specs/PROJECT_STATUS.md) | 指向 revision 6；修正已提交初始化状态 |
+| [运行说明](../../intelligence-hub.md) | 显式标记基础实现尚待补齐的链路 |
+
+未实施：真实数据库迁移、账号登录、收费调用、运行服务、部署、推送及全局规则修改。

@@ -2,7 +2,7 @@
 
 Tool: Codex App
 Date: 2026-08-24
-Updated: 2026-08-25
+Updated: 2026-08-30
 Task: wechat-intelligence-hub
 
 Documentation level: `controlled`
@@ -10,15 +10,16 @@ Documentation level: `controlled`
 ## Control Plane Snapshot
 
 - Controller: `app-root`
-- Work-order version: 4
+- Work-order version: 6
 - Canonical plan: [plan.md](plan.md)
 - Canonical task ledger: [tasks.md](tasks.md)
-- Last material event: WU-9 CodeNote + AI-DB initialization accepted; WU-7 SupSub runtime canary remains deferred.
+- Last material event: RAW-006 confirms seven v3 remediation batches and local commits. WU-10 is active;
+  WU-11..16 are pending. WU-7 live SupSub canary remains deferred.
 
 ## Current State
 
 - Core repository is on local `czz-main`, based on upstream `f54aba5` and containing split local commits through
-  `f2987dd`. The RAW-005 CodeNote/AI-DB initialization is committed as `0947b3c` plus ledger sync `f2987dd`; an
+  `d44a41e`. The RAW-005 CodeNote/AI-DB initialization is committed as `0947b3c` plus ledger sync `f2987dd`; an
   unrelated pre-existing `tools/fix_db.py` splice repair is committed separately as `44198c3`. Nothing is pushed.
 - `Wechat2RSS` is a read-only local reference at `0416ecf`.
 - Legacy repository retains rollback branch and stash; its `czz-main` has three local documentation commits.
@@ -70,6 +71,11 @@ Documentation level: `controlled`
   startup with initialization, generated DDL, migration runners and data repair remain human/DBA-gated mutations.
 
 ## Next Safe Step
+
+- Active implementation follows [v3 seven-batch plan](plan.md#active-v3-remediation), beginning with WU-10
+  document verification and WU-11 frozen migrations. Current-turn authorization includes local scoped commits
+  only. Preserve unrelated verify/changes hunks; do not reset, stash, change other worktrees or push.
+- Historical WU-1..9 success does not close current head-poll, digest-barrier, common-ranking and reader-state gaps.
 
 - For product implementation, take one planned/partial row from the migration matrix and create a scoped acceptance
   slice. For DB validation, the next safe step is a separately approved read-only staging schema inspection; for

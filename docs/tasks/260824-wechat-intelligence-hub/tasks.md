@@ -2,14 +2,14 @@
 
 Tool: Codex App
 Date: 2026-08-24
-Updated: 2026-08-25
+Updated: 2026-08-30
 Task: wechat-intelligence-hub
 
 Documentation level: `controlled`
 
 ## Task State
 
-`accepted`
+`v3-implementing`; WU-0..9 retain their historical local/static acceptance only.
 
 ## Work Unit Ledger
 
@@ -25,6 +25,13 @@ Documentation level: `controlled`
 | WU-7 SupSub adapter/canary | 1 | 0 | future | app-root | deferred-by-scope | no install/login/account fixture | explicit implementation and external-action gate | start with Feed/CLI read-only fixture |
 | WU-8 Legacy documentation migration | 1 | 1 | main | app-root | accepted | donor/current source matrix, index, link and statement checks pass | runtime gaps remain explicit | keep core docs canonical |
 | WU-9 CodeNote + AI-DB initialization | 1 | 1 | main | app-root | accepted | project audit OK; resolver 2/2; catalog tests 14/14; AI-DB 15/15 populated | live DB/runtime excluded | keep staging inspection and mutation gates explicit |
+| WU-10 Correctness plan | 1 | 1 | main | app-root | accepted | RAW-006, exact manifest, code-link/diff checks | none | local commit then WU-11 |
+| WU-11 Versioned schema | 1 | 1 | main | app-root | pending | existing metadata/startup inspected | live mutation excluded | frozen revisions and offline tests |
+| WU-12 Fresh collection | 1 | 1 | main | app-root | pending | perpetual cursor and Lite budget gaps | none | isolate poll/backfill checkpoints |
+| WU-13 Digest reconciliation | 1 | 1 | main | app-root | pending | schedule lacks source barrier and revision | none | daily run and late tests |
+| WU-14 Unified preference/content | 1 | 1 | main | app-root | pending | list/digest ranking and content path differ | none | common ranking and local export |
+| WU-15 Floating workspace | 1 | 1 | main | app-root | pending | nested reader and implicit admin import | browser runtime excluded | one state owner and explicit import |
+| WU-16 Connectors/operations | 1 | 1 | main | app-root | pending | runtime registry absent | live providers excluded | offline contracts and status API |
 
 ## Execution Journal
 
@@ -49,6 +56,10 @@ Documentation level: `controlled`
 | E-017 | 2026-08-25 | WU-9 | app-root | accepted | verified-uncommitted -> committed | user renewed commit authorization; three local batches created, then history rebuilt to drop a host absolute path from `vibe/specs/PROJECT_STATUS.md` | keep `44198c3`/`0947b3c`/`f2987dd` local; safety refs retained; no push |
 
 ## Checklist
+
+- [ ] Complete WU-10..16 with focused evidence and coherent local commits.
+- [ ] Preserve pre-existing verify/changes hunks and keep all external-action gates closed.
+- [ ] Synchronize current documentation without promoting static evidence to live acceptance.
 
 - [x] Inspect current implementation and rules.
 - [x] Apply scoped backend changes.

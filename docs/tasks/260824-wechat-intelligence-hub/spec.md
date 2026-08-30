@@ -2,14 +2,14 @@
 
 Tool: Codex App
 Date: 2026-08-24
-Updated: 2026-08-25
+Updated: 2026-08-30
 Task: wechat-intelligence-hub
 
 Documentation level: `controlled`
 
 ## Task Documentation Sync Group
 
-- Group key: `dsg:we-mp-rss:wechat-intelligence-hub-v1`
+- Group key: `dsg:we-mp-rss:correctness-v3`
 - Group owner: this `spec.md`
 - Task-root discovery prefix: `docs/tasks/260824-wechat-intelligence-hub/`
 - Durable document members: documentation index, raw requirement, spec, plan, tasks, verify, handoff, changes,
@@ -23,21 +23,28 @@ Documentation level: `controlled`
 ```json documentation-sync-group-v1
 {
   "schema": "documentation-sync-group-v1",
-  "group_key": "dsg:we-mp-rss:wechat-intelligence-hub-v1",
+  "group_key": "dsg:we-mp-rss:correctness-v3",
   "group_owner": "docs/tasks/260824-wechat-intelligence-hub/spec.md",
   "documents": [
-    "docs/README.md",
-    "docs/tasks/260824-wechat-intelligence-hub",
-    "docs/migrations",
-    "docs/integrations",
-    "docs/research/wechat-collection-landscape.md",
-    "docs/research/supsub-integration.md",
+    "docs/tasks/260824-wechat-intelligence-hub/spec.md",
+    "docs/tasks/260824-wechat-intelligence-hub/raw-requirement.md",
+    "docs/tasks/260824-wechat-intelligence-hub/plan.md",
+    "docs/tasks/260824-wechat-intelligence-hub/tasks.md",
+    "docs/tasks/260824-wechat-intelligence-hub/verify.md",
+    "docs/tasks/260824-wechat-intelligence-hub/handoff.md",
+    "docs/tasks/260824-wechat-intelligence-hub/changes.md",
+    "docs/intelligence-hub.md",
     "AGENTS.md",
-    "CLAUDE.md",
-    "vibe"
+    "vibe/rules/README.md",
+    "vibe/rules/project.md",
+    "vibe/rules/workflow.md",
+    "vibe/rules/documentation.md",
+    "vibe/specs/PROJECT_STATUS.md",
+    "vibe/ai-db/README.md",
+    "vibe/ai-db/rules.md"
   ],
-  "dependencies": ["core/intelligence", "apis/intelligence.py", "web_ui/src"],
-  "validators": ["local-markdown-links", "provider-evidence-freshness", "codenote-project-audit", "project-catalog-resolution"],
+  "dependencies": ["core/db.py", "core/intelligence/models.py", "core/intelligence/collector.py", "core/intelligence/jobs.py", "core/intelligence/workflow.py", "core/intelligence/services.py", "apis/intelligence.py", "web_ui/src/components/intelligence/IntelligenceHub.vue"],
+  "validators": [],
   "git_scope_prefixes": ["AGENTS.md", "CLAUDE.md", "vibe", "docs/README.md", "docs/intelligence-hub.md", "docs/tasks/260824-wechat-intelligence-hub", "docs/migrations", "docs/integrations", "docs/research"]
 }
 ```
@@ -74,6 +81,23 @@ Documentation level: `controlled`
   是非空文档/记忆工作区，不是连接器或执行器；Agent 不执行 DDL、DML、迁移、初始化或数据修复。
 
 ## Success Criteria
+
+### v3 correctness acceptance (RAW-006)
+
+- 每日头部轮询从最新页开始；历史回补使用独立游标。失败/租约失效不推进检查点，不把限额等待
+  计为供应商失败；来源、共享账户与进程总预算有持久化退让路径。
+- 启动不再偷偷补列；迁移具有冻结的版本链、离线 SQL 与只读 schema 检查。存量数据库由人类/DBA
+  执行，测试仅使用进程内隔离数据，不以自动迁移用户数据库完成验收。
+- 日报以每日运行及来源快照追踪覆盖；截止仍未齐全时发布 partial 并解释原因；迟到文章可修订，
+  摘要版本和 outbox 幂等键同步变化，同一输入重跑不重复发布。
+- 收件箱、日报共用相关度和已批准偏好规则；支持主题偏好、规则撤销及保存过滤，明确反馈优先。
+- 阅读与下载只读可见本地内容；Markdown 为真正的 Markdown；新正文可进入内容寻址存储，旧正文
+  保留兼容，不自动执行历史对象迁移。
+- 浮窗使用单一可恢复视图状态，阅读与列表并排，过滤和宽度可保存；打开浮窗不自动导入全库。
+- 连接器运行时只接受已注册且能力匹配的只读操作；Wechat2RSS、SupSub、充值 API 先通过离线
+  fixture 验证，展示来源、任务/冷却/日报覆盖状态；不得把 fixture 通过写成真实供应商已接通。
+
+以下 v2 条目为已交付基础，不代替以上新增回归验收。
 
 - v2 API、跨 SQLite/PostgreSQL 模型、Redis/MQTT 适配层、采集状态机、AI/反馈服务、日期摘要、
   单篇导出和浮窗 UI 可构建并有聚焦测试。
@@ -116,14 +140,21 @@ Documentation level: `controlled`
 
 ```yaml
 spec_id: WXI-001
-spec_revision: 5
+spec_revision: 6
 status: confirmed
-raw_sources: [RAW-001, RAW-002, RAW-003, RAW-004, RAW-005]
+raw_sources: [RAW-001, RAW-002, RAW-003, RAW-004, RAW-005, RAW-006]
 targets:
   - canonical_manifest: this-spec
     base_full_version: upstream-f54aba5
-    result_full_version: czz-main-v4
+    result_full_version: czz-main-v3-correctness
 delta:
+  - requirement_id: WXI-CORRECTNESS
+    operation: clarify
+    before: v2 static foundations accepted without daily freshness and reconciliation regressions
+    after: seven bounded remediation batches with versioned schema, fresh polling, digest coverage and shared ranking
+    raw_refs: [RAW-006]
+    confirmation: explicit
+    canonical_location: spec.md
   - requirement_id: WXI-STORAGE
     operation: modify
     before: global article state and optional external infrastructure
@@ -201,6 +232,12 @@ open_questions: []
 
 ## Requirement Change Review
 
+- RAW-006: `compatible-update`, user-confirmed seven-batch implementation and local commits. Desired product,
+  repository roles and external-action gates are unchanged. The old WU-1..9 receipts remain historical evidence;
+  they do not establish v3 freshness, completeness, ranking parity or floating-reader acceptance.
+- Affected owners: this Spec, plan/ledger/evidence/handoff, current architecture, AI-DB schema memory and current
+  project status. No global rule or external account mutation is included.
+
 - Bounded scan scope / owners: upstream models, APIs, scheduler, Vue routes, README/security guidance, old project
   README/technical details and current core RSS/export/notification/proxy/MCP source search.
 - Visible added: AI topics, feedback learning, dated digests, single-article multi-format export, tenant state,
@@ -236,7 +273,8 @@ open_questions: []
 
 ## Execution Constraints
 
-- Write isolation: clean `czz-main`; task paths only.
+- Write isolation: explicitly requested `czz-main`; one Root writer, task paths/hunks only. Two pre-existing hunks
+  in verify/changes are preserved and excluded from new commits. Other worktrees are inspection-only.
 - High-risk gates: credentials, live WeChat, paid API, data migration, deployment and push remain excluded.
 - DB/SQL boundary: schema/code/tests may use disposable SQLite and isolated test containers; no user database mutation.
 - Fallback: keep v1 routes untouched and disable unfinished v2 background execution by configuration.

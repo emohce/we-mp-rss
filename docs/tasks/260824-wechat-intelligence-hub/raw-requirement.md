@@ -79,6 +79,22 @@ privacy_boundary: no-verbatim-prompt-or-transcript
 发现的项目路由、知识/状态枢纽和非空数据库记忆；AI-DB 只管理数据库事实、路线与人类/DBA 交接，
 不得被误解为允许 Agent 连接或修改数据库。
 
+## RAW-006
+
+```yaml
+raw_id: RAW-006
+captured_at: 2026-08-30
+state: active
+source_lineage: approved-seven-batch-correctness-remediation-and-local-commits
+privacy_boundary: no-verbatim-prompt-or-transcript
+```
+
+用户确认在 `czz-main` 执行七批实际改造并分别本地提交：修订当前整改台账；版本化数据库迁移与
+安全启动；分离每日头部采集和历史回补；日报截止屏障、覆盖率与迟到修订；统一反馈、主题、保存
+过滤和下载；收敛浮窗阅读工作台；只读连接器注册与运行状态。保留既存改动，不推送，不修改真实
+数据库、不登录账号、不调用收费服务、不部署。本轮允许跳过已失效的全局自动路由校验，不修改
+全局规则，也不放宽其他安全门禁。
+
 ## Capture Boundary
 
 - Included: 产品范围、仓库角色、技术约束及其后续覆盖、交互方式、采集与限频、外部连接器、

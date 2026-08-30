@@ -206,6 +206,36 @@ class IntelligenceApiContractTest(unittest.TestCase):
         self.assertNotIn("javascript:bad", page)
         self.assertIn("&lt;script&gt;", page)
 
+    def test_saved_filters_and_personal_topic_feedback_are_scoped(self):
+        self.seed_article()
+        params = {"workspace_id": self.workspace_id}
+        feedback = self.client.post("/api/v2/intelligence/articles/api-article/feedback", params=params,
+                                    json={"event_type": "topic_correction", "value": {"topics": ["新能源"]}})
+        self.assertEqual(feedback.status_code, 200)
+        choices = self.client.get("/api/v2/intelligence/topics", params=params).json()["data"]
+        self.assertEqual(choices[0]["name"], "新能源")
+        filtered = self.client.get("/api/v2/intelligence/articles", params={**params, "topic": "新能源"})
+        self.assertEqual(filtered.json()["data"]["total"], 1)
+        saved = self.client.post("/api/v2/intelligence/saved-filters", params=params,
+                                 json={"name": "新能源", "filters": {"topic": "新能源"}}).json()["data"]
+        self.assertEqual(self.client.get("/api/v2/intelligence/saved-filters", params=params).json()["data"][0]["id"], saved["id"])
+        history = self.client.get("/api/v2/intelligence/feedback", params=params).json()["data"]
+        self.assertEqual(history["total"], 1)
+        self.assertEqual(self.client.get("/api/v2/intelligence/learning-status", params=params).json()["data"]["history_scope"], "all")
+        self.assertEqual(self.client.delete(f"/api/v2/intelligence/saved-filters/{saved['id']}", params=params).status_code, 200)
+        self.assertEqual(self.client.get("/api/v2/intelligence/saved-filters", params=params).json()["data"], [])
+
+    def test_invalid_filter_and_topic_payloads_do_not_write(self):
+        self.seed_article()
+        params = {"workspace_id": self.workspace_id}
+        invalid = self.client.post("/api/v2/intelligence/saved-filters", params=params,
+                                   json={"name": "bad", "filters": {"sql": "bad"}})
+        self.assertEqual(invalid.status_code, 400)
+        invalid_topic = self.client.post("/api/v2/intelligence/articles/api-article/feedback", params=params,
+                                         json={"event_type": "topic_correction", "value": {"topics": "bad"}})
+        self.assertEqual(invalid_topic.status_code, 400)
+        self.assertEqual(self.client.get("/api/v2/intelligence/feedback", params=params).json()["data"]["total"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,6 +13,7 @@ from core.intelligence.providers import WeMpRssCollectorAdapter
 from core.intelligence.rate_limit import RateLimitRepository
 from core.intelligence.scheduling import SHANGHAI
 from core.intelligence.settings import InfrastructureSettings, StorageProfile
+from core.intelligence.storage import build_content_store
 from core.intelligence.workflow import (
     DailyAutomationScheduler,
     WorkflowJobRepository,
@@ -46,6 +47,7 @@ def _runtime(settings: InfrastructureSettings, collector_enabled: bool):
             session_factory=DB.session_factory,
             jobs=collection_jobs,
             rate_limits=RateLimitRepository(DB.session_factory, coordinator),
+            content_store=build_content_store(settings),
             adapters={
                 "we-mp-rss": WeMpRssCollectorAdapter(session_factory=DB.session_factory),
             },

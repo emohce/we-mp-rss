@@ -13,6 +13,8 @@ from core.models.article import Article
 
 from .idempotency import normalize_idempotency_key
 from .daily import queue_reconciliations
+from .content import bind_objects
+from .search import index_article
 from .jobs import ClaimedJob
 from .models import (
     CollectionJob, CollectionRun, CollectorAccount, OutboxEvent, SourceCheckpoint,
@@ -102,7 +104,7 @@ class CollectionState:
             session.commit()
             return attempt
 
-    def finish_page(self, claimed, attempt, page, now: datetime) -> str:
+    def finish_page(self, claimed, attempt, page, now: datetime, *, stored_objects=None) -> str:
         """One DB commit owns article changes, visibility, progress and events."""
         with self.session_factory() as session:
             job = self._fence_job(session, claimed, now)
@@ -119,6 +121,7 @@ class CollectionState:
             checkpoint = session.get(SourceCheckpoint, attempt.checkpoint_id)
             run = session.get(CollectionRun, attempt.run_id)
             ids = self.persist_articles(session, claimed, page)
+            bind_objects(session, stored_objects or {})
             targets = self.link_articles(session, job, ids, page.ingestion_source, now)
             first_page = run.pages == 0
             if first_page:
@@ -200,6 +203,8 @@ class CollectionState:
                 setattr(article, key, value)
             ids.append(article_id)
         session.flush()
+        for article_id in ids:
+            index_article(session, session.get(Article, article_id))
         return ids
 
     @staticmethod

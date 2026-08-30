@@ -29,8 +29,8 @@ Documentation level: `controlled`
 | WU-11 Versioned schema | 1 | 1 | main | app-root | accepted | 43 focused tests; frozen offline SQL, no startup DDL | live mutation excluded | local schema batch and DBA handoff |
 | WU-12 Fresh collection | 1 | 1 | main | app-root | accepted | 53 focused tests; head/backfill, fenced page transaction, durable budgets | live providers excluded | local collector batch |
 | WU-13 Digest reconciliation | 1 | 1 | main | app-root | accepted | 60 focused tests; frozen cohort, partial/late revisions, stable/revocable share | live delivery excluded | local digest batch |
-| WU-14 Unified preference/content | 1 | 1 | main | app-root | implementing | revisioned digest accepts full candidate window | none | common ranking and local export |
-| WU-15 Floating workspace | 1 | 1 | main | app-root | pending | nested reader and implicit admin import | browser runtime excluded | one state owner and explicit import |
+| WU-14 Unified preference/content | 1 | 1 | main | app-root | accepted | 71 focused tests; shared ranking, corrections/rules/filters, FTS and content/export | live S3/PG query plans excluded | local coupled API/query/content batch |
+| WU-15 Floating workspace | 1 | 1 | main | app-root | implementing | backend contracts ready; reader still nested | browser runtime excluded | one state owner and explicit import |
 | WU-16 Connectors/operations | 1 | 1 | main | app-root | pending | runtime registry absent | live providers excluded | offline contracts and status API |
 
 ## Execution Journal

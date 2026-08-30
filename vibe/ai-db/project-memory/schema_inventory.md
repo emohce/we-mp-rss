@@ -33,6 +33,9 @@ Execution remains governed by the [v3 handoff](../ai-db-tasks/260830/0941-intell
 
 ## Current Evidence
 
+- V3 collector binds shared content hashes and updates search documents in the page transaction. Ranking uses
+  personal correction/override/rule state in SQL; saved filters and rule revocation remain workspace/user-scoped.
+  SQLite FTS5 fixture queries pass; PostgreSQL expression compilation is not a live query-plan acceptance.
 - Disposable SQLite tests previously exercised model/service contracts.
 - SQLite, PostgreSQL and MySQL dialects previously rendered offline DDL; MySQL renderability is portability evidence, not an accepted production profile.
 - No authorized live schema inventory, row counts, collation/charset, extension list, migration history or unexpected-object review exists yet.

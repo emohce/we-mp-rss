@@ -50,9 +50,53 @@ Documentation level: `controlled`
     "vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/sql.md",
     "vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/verify.md"
   ],
-  "dependencies": ["core/db.py", "core/intelligence/models.py", "core/intelligence/migration.py", "core/intelligence/collector.py", "core/intelligence/collection_state.py", "core/intelligence/rate_limit.py", "core/intelligence/providers.py", "core/intelligence/jobs.py", "core/intelligence/workflow.py", "core/intelligence/daily.py", "core/intelligence/digests.py", "core/intelligence/services.py", "apis/intelligence.py", "jobs/intelligence.py", "tools/intelligence_schema.py", "migrations/intelligence/env.py", "migrations/intelligence/versions/int_v2_20260824.py", "migrations/intelligence/versions/int_v3_20260830.py", "web_ui/src/components/intelligence/IntelligenceHub.vue"],
-  "validators": ["core/intelligence/test_migration.py", "core/intelligence/test_foundation.py", "core/intelligence/test_collection_state.py", "core/intelligence/test_workers.py", "core/intelligence/test_services.py", "core/intelligence/test_daily.py", "core/intelligence/test_api.py"],
-  "git_scope_prefixes": ["AGENTS.md", "CLAUDE.md", "vibe", "docs/README.md", "docs/intelligence-hub.md", "docs/tasks/260824-wechat-intelligence-hub", "docs/migrations", "docs/integrations", "docs/research"]
+  "dependencies": [
+    "core/db.py",
+    "core/intelligence/models.py",
+    "core/intelligence/migration.py",
+    "core/intelligence/collector.py",
+    "core/intelligence/collection_state.py",
+    "core/intelligence/rate_limit.py",
+    "core/intelligence/providers.py",
+    "core/intelligence/jobs.py",
+    "core/intelligence/workflow.py",
+    "core/intelligence/daily.py",
+    "core/intelligence/digests.py",
+    "core/intelligence/services.py",
+    "apis/intelligence.py",
+    "jobs/intelligence.py",
+    "tools/intelligence_schema.py",
+    "migrations/intelligence/env.py",
+    "migrations/intelligence/versions/int_v2_20260824.py",
+    "migrations/intelligence/versions/int_v3_20260830.py",
+    "web_ui/src/components/intelligence/IntelligenceHub.vue",
+    "core/intelligence/ranking.py",
+    "core/intelligence/preferences.py",
+    "core/intelligence/search.py",
+    "core/intelligence/content.py",
+    "core/intelligence/exporting.py"
+  ],
+  "validators": [
+    "core/intelligence/test_migration.py",
+    "core/intelligence/test_foundation.py",
+    "core/intelligence/test_collection_state.py",
+    "core/intelligence/test_workers.py",
+    "core/intelligence/test_services.py",
+    "core/intelligence/test_daily.py",
+    "core/intelligence/test_api.py",
+    "core/intelligence/test_preferences_content.py"
+  ],
+  "git_scope_prefixes": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "vibe",
+    "docs/README.md",
+    "docs/intelligence-hub.md",
+    "docs/tasks/260824-wechat-intelligence-hub",
+    "docs/migrations",
+    "docs/integrations",
+    "docs/research"
+  ]
 }
 ```
 

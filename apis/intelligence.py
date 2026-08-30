@@ -21,7 +21,10 @@ from core.intelligence.models import (
     ArticleTopic,
     Digest,
     DigestRevision,
+    FeedbackEvent,
+    PreferenceRule,
     PreferenceRuleProposal,
+    SavedFilter,
     SourceProfile,
     Topic,
     WorkspaceArticle,
@@ -38,6 +41,9 @@ from core.intelligence.services import (
     TenantService,
 )
 from core.intelligence.settings import InfrastructureSettings
+from core.intelligence.storage import build_content_store
+from core.intelligence.preferences import revoke_rule, save_filter
+from core.intelligence.ranking import RankingQuery
 
 from .base import error_response, success_response
 
@@ -125,6 +131,11 @@ class ShareRequest(BaseModel):
     expires_in_hours: int = Field(default=168, ge=1, le=2160)
 
 
+class SavedFilterRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    filters: dict = Field(default_factory=dict)
+
+
 def _proposal_data(proposal: PreferenceRuleProposal) -> dict:
     return {
         "id": proposal.id,
@@ -204,6 +215,7 @@ def list_articles(
     min_relevance: float | None = Query(default=None, ge=0, le=1),
     date_from: int | None = Query(default=None, ge=0),
     date_to: int | None = Query(default=None, ge=0),
+    order: str = Query(default="relevance", pattern="^(relevance|newest)$"),
 ):
     user_id, _ = _identity(current_user)
     try:
@@ -221,6 +233,7 @@ def list_articles(
                 min_relevance=min_relevance,
                 date_from=date_from,
                 date_to=date_to,
+                order=order,
             )
         )
     except Exception as exc:
@@ -242,6 +255,7 @@ def get_article(
                 workspace_id=workspace_id,
                 user_id=user_id,
                 article_id=article_id,
+                content_store_factory=lambda: build_content_store(InfrastructureSettings.from_env(cfg.get)),
             )
         )
     except Exception as exc:
@@ -263,6 +277,7 @@ def download_article(
             workspace_id=workspace_id,
             user_id=user_id,
             article_id=article_id,
+            content_store_factory=lambda: build_content_store(InfrastructureSettings.from_env(cfg.get)),
         )
         artifact = SingleArticleExporter().export(article, format_name)
         return Response(
@@ -337,34 +352,7 @@ def list_topics(
     user_id, _ = _identity(current_user)
     try:
         TenantService.require_membership(session, workspace_id, user_id)
-        rows = session.execute(
-            select(
-                Topic.slug,
-                Topic.name,
-                func.count(distinct(ArticleTopic.article_id)),
-                func.avg(ArticleTopic.confidence),
-            )
-            .join(ArticleTopic, ArticleTopic.topic_id == Topic.id)
-            .join(WorkspaceArticle, WorkspaceArticle.article_id == ArticleTopic.article_id)
-            .where(
-                ArticleTopic.workspace_id == workspace_id,
-                WorkspaceArticle.workspace_id == workspace_id,
-            )
-            .group_by(Topic.id, Topic.slug, Topic.name)
-            .order_by(func.count(distinct(ArticleTopic.article_id)).desc(), Topic.name)
-            .limit(100)
-        ).all()
-        return success_response(
-            [
-                {
-                    "slug": slug,
-                    "name": name,
-                    "article_count": article_count,
-                    "average_confidence": float(average_confidence or 0),
-                }
-                for slug, name, article_count, average_confidence in rows
-            ]
-        )
+        return success_response(RankingQuery(session, workspace_id, user_id).topic_choices())
     except Exception as exc:
         raise _service_error(exc) from exc
 
@@ -517,6 +505,113 @@ def review_preference_proposal(
             approve=payload.approve,
         )
         return success_response(_proposal_data(proposal))
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.get("/learning-status", summary="查看个人反馈学习覆盖范围")
+def learning_status(session: SessionDependency, current_user: CurrentUser,
+                     workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        total, distinct_articles, first, last = session.execute(select(
+            func.count(FeedbackEvent.id), func.count(distinct(FeedbackEvent.article_id)),
+            func.min(FeedbackEvent.created_at), func.max(FeedbackEvent.created_at),
+        ).where(FeedbackEvent.workspace_id == workspace_id, FeedbackEvent.user_id == user_id)).one()
+        span_days = (last - first).total_seconds() / 86400 if first and last else 0
+        return success_response({"events": total, "distinct_articles": distinct_articles,
+                                  "span_days": round(span_days, 2), "history_scope": "all",
+                                  "eligible": distinct_articles >= 20 and span_days >= 7,
+                                  "minimum_articles": 20, "minimum_days": 7,
+                                  "free_text_policy": "retained_as_evidence_not_automatically_applied"})
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.get("/feedback", summary="读取个人不可变反馈记录")
+def feedback_history(session: SessionDependency, current_user: CurrentUser,
+                      workspace_id: str = Query(min_length=1, max_length=32),
+                      article_id: str = Query(default="", max_length=255),
+                      offset: int = Query(default=0, ge=0), limit: int = Query(default=50, ge=1, le=100)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        query = select(FeedbackEvent).where(FeedbackEvent.workspace_id == workspace_id, FeedbackEvent.user_id == user_id)
+        if article_id:
+            query = query.where(FeedbackEvent.article_id == article_id)
+        total = session.scalar(select(func.count()).select_from(query.subquery()))
+        rows = session.scalars(query.order_by(FeedbackEvent.created_at.desc(), FeedbackEvent.id.desc()).offset(offset).limit(limit))
+        return success_response({"total": total, "items": [{"id": row.id, "article_id": row.article_id,
+                                  "event_type": row.event_type, "value": row.value, "created_at": row.created_at} for row in rows]})
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.get("/preference-rules", summary="列出个人偏好规则和版本")
+def list_preference_rules(session: SessionDependency, current_user: CurrentUser,
+                          workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        rows = session.scalars(select(PreferenceRule).where(PreferenceRule.workspace_id == workspace_id,
+            PreferenceRule.user_id == user_id).order_by(PreferenceRule.created_at.desc()))
+        return success_response([{"id": rule.id, "rule_type": rule.rule_type, "condition": rule.condition,
+                                  "action": rule.action, "version": rule.version, "is_active": rule.is_active,
+                                  "revoked_at": rule.revoked_at, "proposal_id": rule.proposal_id} for rule in rows])
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.post("/preference-rules/{rule_id}/revoke", summary="撤销个人偏好规则")
+def revoke_preference_rule(rule_id: str, session: SessionDependency, current_user: CurrentUser,
+                           workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        rule = revoke_rule(session, workspace_id=workspace_id, user_id=user_id, rule_id=rule_id)
+        return success_response({"id": rule.id, "version": rule.version, "is_active": rule.is_active})
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.get("/saved-filters", summary="列出个人已保存筛选")
+def list_saved_filters(session: SessionDependency, current_user: CurrentUser,
+                        workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        rows = session.scalars(select(SavedFilter).where(SavedFilter.workspace_id == workspace_id,
+            SavedFilter.user_id == user_id).order_by(SavedFilter.updated_at.desc()))
+        return success_response([{"id": row.id, "name": row.name, "filters": row.filters} for row in rows])
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.post("/saved-filters", summary="保存或更新个人筛选")
+def upsert_saved_filter(payload: SavedFilterRequest, session: SessionDependency, current_user: CurrentUser,
+                        workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        saved = save_filter(session, workspace_id=workspace_id, user_id=user_id,
+                            name=payload.name, filters=payload.filters)
+        return success_response({"id": saved.id, "name": saved.name, "filters": saved.filters})
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.delete("/saved-filters/{filter_id}", summary="删除个人已保存筛选")
+def delete_saved_filter(filter_id: str, session: SessionDependency, current_user: CurrentUser,
+                         workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        saved = session.scalar(select(SavedFilter).where(SavedFilter.id == filter_id,
+            SavedFilter.workspace_id == workspace_id, SavedFilter.user_id == user_id))
+        if saved is None:
+            raise AccessDenied("saved filter not found")
+        session.delete(saved)
+        session.commit()
+        return success_response({"id": filter_id, "deleted": True})
     except Exception as exc:
         raise _service_error(exc) from exc
 

@@ -14,7 +14,8 @@ Documentation level: `controlled`
 - Canonical plan: [plan.md](plan.md)
 - Canonical task ledger: [tasks.md](tasks.md)
 - Last material event: WU-10 plan `71367de`, WU-11 schema `26b983c`, WU-12 collection `201869f`;
-  WU-13 daily reconciliation passes 60 focused tests. WU-14 is active; WU-15..16 are pending.
+  WU-13 daily reconciliation `4a10003`; WU-14 ranking/content passes 71 focused tests. WU-15 is active;
+  WU-16 is pending. The D-5 batch is coupled across query, API, feedback and content contracts to remain runnable.
   WU-7 live SupSub canary remains deferred.
 
 ## Current State
@@ -73,8 +74,8 @@ Documentation level: `controlled`
 
 ## Next Safe Step
 
-- Active implementation follows [v3 seven-batch plan](plan.md#active-v3-remediation), continuing with WU-14
-  ranking/content after WU-13 local commit. Current-turn authorization includes local scoped commits
+- Active implementation follows [v3 seven-batch plan](plan.md#active-v3-remediation), continuing with WU-15
+  floating workspace after WU-14 local commit. Current-turn authorization includes local scoped commits
   only. Preserve unrelated verify/changes hunks; do not reset, stash, change other worktrees or push.
 - Historical WU-1..9 success does not close current head-poll, digest-barrier, common-ranking and reader-state gaps.
 

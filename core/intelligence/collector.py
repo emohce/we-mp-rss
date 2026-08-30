@@ -7,6 +7,7 @@ from typing import Callable, Protocol
 from sqlalchemy.orm import Session
 
 from .collection_state import CollectionState, LeaseLost, SourceBusy
+from .content import prepare_objects
 from .jobs import ClaimedJob, JobRepository
 from .models import CollectorAccount, utcnow
 from .rate_limit import (
@@ -60,6 +61,7 @@ class CollectionWorker:
         rate_limits: RateLimitRepository,
         adapters: dict[str, CollectorAdapter],
         max_articles_per_page: int = 100,
+        content_store=None,
     ):
         self.session_factory = session_factory
         self.jobs = jobs
@@ -67,6 +69,7 @@ class CollectionWorker:
         self.adapters = adapters
         self.max_articles_per_page = min(max(max_articles_per_page, 1), 500)
         self.state = CollectionState(session_factory)
+        self.content_store = content_store
 
     def run_once(self, *, now: datetime | None = None) -> str:
         clock = (lambda: now) if now is not None else utcnow
@@ -132,7 +135,8 @@ class CollectionWorker:
                     "page_too_large",
                     safe_message="collector page exceeded the configured article limit",
                 )
-            result = self.state.finish_page(claimed, attempt, page, clock())
+            objects = prepare_objects(page, self.content_store)
+            result = self.state.finish_page(claimed, attempt, page, clock(), stored_objects=objects)
             self.rate_limits.apply_signal(
                 claimed.provider,
                 claimed.account_id,

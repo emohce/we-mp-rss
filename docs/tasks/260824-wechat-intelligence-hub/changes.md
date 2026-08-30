@@ -115,5 +115,8 @@ Updated: 2026-08-25
 | [collection regressions](../../../core/intelligence/test_collection_state.py#L1)、[worker tests](../../../core/intelligence/test_workers.py#L1)、[service tests](../../../core/intelligence/test_services.py#L1) | 多日、恢复、页预算、租户和契约回归 |
 | [daily coverage](../../../core/intelligence/daily.py#L1)、[digests](../../../core/intelligence/digests.py#L1) | 固定来源清单、部分发布、迟到补录、版本化快照和 outbox |
 | [daily regressions](../../../core/intelligence/test_daily.py#L1)、[API](../../../apis/intelligence.py#L1)、[API tests](../../../core/intelligence/test_api.py#L1) | 601 篇无截断、修订历史、稳定分享链接与撤销/隐私 |
+| [ranking](../../../core/intelligence/ranking.py#L1)、[preferences](../../../core/intelligence/preferences.py#L1) | 共用 SQL 排序、个性主题/摘要、全历史建议、可撤销规则和保存筛选 |
+| [search](../../../core/intelligence/search.py#L1)、[content](../../../core/intelligence/content.py#L1)、[export](../../../core/intelligence/exporting.py#L1) | 持久化正文检索、对象引用/哈希校验与真实 Markdown 转换 |
+| [preference/content regressions](../../../core/intelligence/test_preferences_content.py#L1) | 620 篇检索、个人隔离、偏好版本、SQL/FTS、内容去重与降级 |
 
 未实施：真实数据库迁移、账号登录、收费调用、运行服务、部署、推送及全局规则修改。

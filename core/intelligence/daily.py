@@ -65,7 +65,7 @@ def coverage_for(session, daily_run, article_ids=()):
 
 
 def queue_reconciliations(session, *, workspace_ids=(), article_ids=(), collection_job_id=None,
-                          cause: str, now: datetime):
+                          cause: str, now: datetime, user_ids=None):
     runs = {}
     if collection_job_id:
         for run in session.scalars(select(DailyRun).join(
@@ -81,13 +81,14 @@ def queue_reconciliations(session, *, workspace_ids=(), article_ids=(), collecti
         )):
             runs[run.id] = run
     for run in runs.values():
-        queue_run(session, run, cause=cause, now=now)
+        queue_run(session, run, cause=cause, now=now, user_ids=user_ids)
 
 
-def queue_run(session, run, *, cause: str, now: datetime):
-    for user_id in session.scalars(select(WorkspaceMembership.user_id).where(
+def queue_run(session, run, *, cause: str, now: datetime, user_ids=None):
+    users = user_ids if user_ids is not None else session.scalars(select(WorkspaceMembership.user_id).where(
         WorkspaceMembership.workspace_id == run.workspace_id,
-    )):
+    ))
+    for user_id in users:
         key = normalize_idempotency_key(f"digest-reconcile:{run.id}:{user_id}:{cause}", 180)
         if session.scalar(select(WorkflowJob.id).where(WorkflowJob.idempotency_key == key)) is None:
             session.add(WorkflowJob(

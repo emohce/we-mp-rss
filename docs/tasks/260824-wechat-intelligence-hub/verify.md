@@ -177,7 +177,12 @@ Documentation level: `controlled`
   cohort, disabled/failed source visibility, automatic late collection/analysis revisions, immutable/idempotent
   snapshots, 601-article input without a 500-item cap, old-date reconciliation and revocable latest-version shares.
   API contracts verify history, revision display, no-store public pages and revocation; affected Python compiles.
-- WU-14..16: pending; historical 39-test evidence does not validate ranking parity or reader state.
+- WU-14: 71 intelligence tests passed. New evidence covers inbox/digest score parity, explicit override priority,
+  personal topic correction isolation, all-history source/topic/reading proposals, idempotent approval/revocation,
+  saved-filter validation, matches beyond 500, scope-bound cursors, bounded list query count, SQLite FTS5 and
+  literal legacy-body search, PostgreSQL SQL compilation, real Markdown conversion, shared object hashes and
+  verified local content fallback. No OpenAI/API credential work or real provider/S3/database action occurred.
+- WU-15..16: pending; historical frontend success does not validate the new reader state or connector runtime.
 - Automatic global router reports an oversized response owner and registry/loading-graph drift. The user permits
   bypassing only that automatic check for this implementation turn; no global rule was changed.
 - Verification route: scoped docs plus isolated intelligence package contracts and affected frontend checks.

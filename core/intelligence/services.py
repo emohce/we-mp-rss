@@ -197,10 +197,12 @@ class ArticleService:
         *,
         include_content: bool,
     ) -> dict:
-        result = article.to_dict()
-        if not include_content:
-            result.pop("content", None)
-            result.pop("content_html", None)
+        if include_content:
+            result = article.to_dict()
+        else:
+            result = {column.name: getattr(article, column.name) for column in Article.__table__.columns
+                      if column.name not in {"content", "content_html"}}
+            result = {key: value.isoformat() if isinstance(value, datetime) else value for key, value in result.items()}
         ai_relevance, effective_relevance = ArticleService._relevance(analysis, state)
         result.update(
             {
@@ -221,178 +223,33 @@ class ArticleService:
 
     @classmethod
     def list_articles(
-        cls,
-        session: Session,
-        *,
-        workspace_id: str,
-        user_id: str,
-        limit: int = 50,
-        cursor: str = "",
-        search: str = "",
-        source_id: str = "",
-        topic: str = "",
-        state_filter: str = "",
-        min_relevance: float | None = None,
-        date_from: int | None = None,
-        date_to: int | None = None,
+        cls, session: Session, *, workspace_id: str, user_id: str, limit: int = 50,
+        cursor: str = "", search: str = "", source_id: str = "", topic: str = "",
+        state_filter: str = "", min_relevance: float | None = None,
+        date_from: int | None = None, date_to: int | None = None, order: str = "relevance",
     ) -> dict:
+        from .ranking import list_ranked
         TenantService.require_membership(session, workspace_id, user_id)
-        user_state = aliased(UserArticleState)
-        query = (
-            select(Article, user_state)
-            .join(WorkspaceArticle, WorkspaceArticle.article_id == Article.id)
-            .outerjoin(
-                user_state,
-                and_(
-                    user_state.workspace_id == workspace_id,
-                    user_state.user_id == user_id,
-                    user_state.article_id == Article.id,
-                ),
-            )
-            .where(
-                WorkspaceArticle.workspace_id == workspace_id,
-                Article.status != DATA_STATUS.DELETED,
-            )
-        )
-        if search:
-            pattern = f"%{search[:120]}%"
-            query = query.where(or_(Article.title.like(pattern), Article.description.like(pattern)))
-        if source_id:
-            query = query.where(Article.mp_id == source_id)
-        if date_from is not None:
-            query = query.where(Article.publish_time >= date_from)
-        if date_to is not None:
-            query = query.where(Article.publish_time <= date_to)
-        if state_filter == "hidden":
-            query = query.where(user_state.is_hidden.is_(True))
-        else:
-            query = query.where(or_(user_state.id.is_(None), user_state.is_hidden.is_(False)))
-        if state_filter == "favorite":
-            query = query.where(user_state.is_favorite.is_(True))
-        elif state_filter == "unread":
-            query = query.where(or_(user_state.id.is_(None), user_state.is_read.is_(False)))
-        if topic:
-            query = query.join(ArticleTopic, ArticleTopic.article_id == Article.id).join(
-                Topic, Topic.id == ArticleTopic.topic_id
-            ).where(
-                ArticleTopic.workspace_id == workspace_id,
-                or_(Topic.slug == topic, Topic.name == topic),
-            ).distinct()
-        if cursor:
-            cursor_time, cursor_id = _decode_cursor(cursor)
-            query = query.where(
-                or_(
-                    Article.publish_time < cursor_time,
-                    and_(Article.publish_time == cursor_time, Article.id < cursor_id),
-                )
-            )
-        requested_limit = min(max(limit, 1), 100)
-        candidate_limit = requested_limit + 1 if min_relevance is None else max(500, requested_limit + 1)
-        rows = session.execute(
-            query.order_by(Article.publish_time.desc(), Article.id.desc()).limit(candidate_limit)
-        ).all()
-        article_ids = [article.id for article, _ in rows]
-
-        latest_analysis: dict[str, AnalysisRun] = {}
-        if article_ids:
-            for run in session.scalars(
-                select(AnalysisRun)
-                .where(
-                    AnalysisRun.workspace_id == workspace_id,
-                    AnalysisRun.article_id.in_(article_ids),
-                )
-                .order_by(AnalysisRun.article_id, AnalysisRun.created_at.desc())
-            ):
-                latest_analysis.setdefault(run.article_id, run)
-        topic_candidates: dict[str, dict[str, dict]] = defaultdict(dict)
-        if article_ids:
-            topic_rows = session.execute(
-                select(ArticleTopic, Topic)
-                .join(Topic, Topic.id == ArticleTopic.topic_id)
-                .where(
-                    ArticleTopic.workspace_id == workspace_id,
-                    ArticleTopic.article_id.in_(article_ids),
-                )
-                .order_by(ArticleTopic.confidence.desc())
-            ).all()
-            for link, topic_model in topic_rows:
-                candidate = {
-                    "slug": topic_model.slug,
-                    "name": topic_model.name,
-                    "confidence": link.confidence,
-                }
-                existing = topic_candidates[link.article_id].get(topic_model.slug)
-                if existing is None or float(candidate["confidence"]) > float(existing["confidence"]):
-                    topic_candidates[link.article_id][topic_model.slug] = candidate
-        topic_map = {
-            article_id: sorted(values.values(), key=lambda item: item["confidence"], reverse=True)
-            for article_id, values in topic_candidates.items()
-        }
-        accepted_rows: list[tuple[Article, UserArticleState | None]] = []
-        for article, state in rows:
-            run = latest_analysis.get(article.id)
-            _, relevance = cls._relevance(run, state)
-            if min_relevance is not None and relevance < min_relevance:
-                continue
-            accepted_rows.append((article, state))
-        has_more = len(accepted_rows) > requested_limit or len(rows) == candidate_limit
-        visible_rows = accepted_rows[:requested_limit]
-        items = [
-            cls._serialize(
-                article,
-                state,
-                latest_analysis.get(article.id),
-                topic_map.get(article.id, []),
-                include_content=False,
-            )
-            for article, state in visible_rows
-        ]
-        next_cursor = ""
-        if has_more and rows:
-            if len(accepted_rows) > requested_limit:
-                last_article = visible_rows[-1][0]
-            else:
-                last_article = rows[-1][0]
-            next_cursor = _encode_cursor(int(last_article.publish_time or 0), last_article.id)
-        return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
+        return list_ranked(session, workspace_id=workspace_id, user_id=user_id, limit=limit,
+                           cursor=cursor, order=order, search=search, source_id=source_id, topic=topic,
+                           state_filter=state_filter, min_relevance=min_relevance,
+                           date_from=date_from, date_to=date_to)
 
     @classmethod
-    def get_article(cls, session: Session, *, workspace_id: str, user_id: str, article_id: str) -> dict:
+    def get_article(cls, session: Session, *, workspace_id: str, user_id: str, article_id: str,
+                    content_store_factory=None) -> dict:
+        from .content import resolve_content
+        from .ranking import RankingQuery
         TenantService.require_membership(session, workspace_id, user_id)
-        article = TenantService.require_article(session, workspace_id, article_id)
-        state = session.scalar(
-            select(UserArticleState).where(
-                UserArticleState.workspace_id == workspace_id,
-                UserArticleState.user_id == user_id,
-                UserArticleState.article_id == article_id,
-            )
-        )
-        analysis = session.scalar(
-            select(AnalysisRun)
-            .where(
-                AnalysisRun.workspace_id == workspace_id,
-                AnalysisRun.article_id == article_id,
-            )
-            .order_by(AnalysisRun.created_at.desc())
-            .limit(1)
-        )
-        topic_rows = session.execute(
-            select(ArticleTopic, Topic)
-            .join(Topic, Topic.id == ArticleTopic.topic_id)
-            .where(
-                ArticleTopic.workspace_id == workspace_id,
-                ArticleTopic.article_id == article_id,
-            )
-            .order_by(ArticleTopic.confidence.desc())
-        ).all()
-        topics_by_slug: dict[str, dict] = {}
-        for link, topic in topic_rows:
-            topics_by_slug.setdefault(
-                topic.slug,
-                {"slug": topic.slug, "name": topic.name, "confidence": link.confidence},
-            )
-        topics = list(topics_by_slug.values())
-        return cls._serialize(article, state, analysis, topics, include_content=True)
+        TenantService.require_article(session, workspace_id, article_id)
+        ranking = RankingQuery(session, workspace_id, user_id)
+        rows = session.execute(ranking.filtered(article_id=article_id, state_filter="all")).all()
+        if not rows:
+            raise AccessDenied("article is not visible in this workspace")
+        data = ranking.serialize(rows, include_content=True)[0]
+        body, content_status, warning = resolve_content(session, rows[0][0], store_factory=content_store_factory)
+        data.update(content=body, content_html=body, content_status=content_status, content_warning=warning)
+        return data
 
 
 class FeedbackService:
@@ -427,6 +284,8 @@ class FeedbackService:
         TenantService.require_article(session, workspace_id, article_id)
         if event_type not in cls.ALLOWED_EVENTS:
             raise ValueError("unsupported feedback event")
+        from .preferences import feedback_value
+        value = feedback_value(event_type, value)
         state = session.scalar(
             select(UserArticleState).where(
                 UserArticleState.workspace_id == workspace_id,
@@ -468,139 +327,24 @@ class FeedbackService:
             value=value or {},
         )
         session.add(event)
+        session.flush()
+        queue_reconciliations(session, workspace_ids=[workspace_id], article_ids=[article_id],
+                              cause=f"feedback:{event.id}", now=utcnow(), user_ids=(user_id,))
         session.commit()
         session.refresh(event)
         return event
 
     @staticmethod
     def propose_preferences(session: Session, *, workspace_id: str, user_id: str) -> list[PreferenceRuleProposal]:
-        TenantService.require_membership(session, workspace_id, user_id)
-        events = session.execute(
-            select(FeedbackEvent, Article)
-            .join(Article, Article.id == FeedbackEvent.article_id)
-            .where(
-                FeedbackEvent.workspace_id == workspace_id,
-                FeedbackEvent.user_id == user_id,
-                FeedbackEvent.event_type.in_(
-                    [
-                        "like",
-                        "favorite",
-                        "dislike",
-                        "irrelevant",
-                        "hide",
-                        "unfavorite",
-                        "neutral",
-                        "unhide",
-                    ]
-                ),
-                FeedbackEvent.created_at >= utcnow() - timedelta(days=90),
-            )
-            .order_by(FeedbackEvent.created_at)
-        ).all()
-        latest_by_article: dict[str, tuple[FeedbackEvent, Article]] = {}
-        for event, article in events:
-            latest_by_article[event.article_id] = (event, article)
-        distinct_events = list(latest_by_article.values())
-        distinct_events.sort(key=lambda item: item[0].created_at)
-        if (
-            len(distinct_events) < 20
-            or (distinct_events[-1][0].created_at - distinct_events[0][0].created_at)
-            < timedelta(days=7)
-        ):
-            return []
-        event_by_article = {event.article_id: event for event, _ in distinct_events}
-        source_events: dict[str, list[tuple[FeedbackEvent, int]]] = defaultdict(list)
-        states = session.execute(
-            select(UserArticleState, Article)
-            .join(Article, Article.id == UserArticleState.article_id)
-            .where(
-                UserArticleState.workspace_id == workspace_id,
-                UserArticleState.user_id == user_id,
-                UserArticleState.article_id.in_(list(event_by_article)),
-            )
-        ).all()
-        for state, article in states:
-            score = 0
-            if state.is_hidden or state.sentiment == "dislike":
-                score = -1
-            elif state.sentiment == "like" or state.is_favorite:
-                score = 1
-            if score:
-                source_events[str(article.mp_id or "")].append(
-                    (event_by_article[state.article_id], score)
-                )
-        existing = session.scalars(
-            select(PreferenceRuleProposal).where(
-                PreferenceRuleProposal.workspace_id == workspace_id,
-                PreferenceRuleProposal.user_id == user_id,
-                PreferenceRuleProposal.status == "pending",
-            )
-        ).all()
-        existing_conditions = {json.dumps(item.condition, sort_keys=True) for item in existing}
-        created: list[PreferenceRuleProposal] = []
-        for source_id, scored in source_events.items():
-            if not source_id or len(scored) < 3:
-                continue
-            total = sum(score for _, score in scored)
-            confidence = abs(total) / len(scored)
-            if confidence < 0.7:
-                continue
-            condition = {"source_ids": [source_id]}
-            if json.dumps(condition, sort_keys=True) in existing_conditions:
-                continue
-            action = {"rank_boost": 0.25} if total > 0 else {"rank_boost": -0.4, "collapse": True}
-            proposal = PreferenceRuleProposal(
-                workspace_id=workspace_id,
-                user_id=user_id,
-                rule_type="source_preference",
-                condition=condition,
-                action=action,
-                confidence=confidence,
-                evidence=[event.id for event, _ in scored[-10:]],
-            )
-            session.add(proposal)
-            created.append(proposal)
-        session.commit()
-        for proposal in created:
-            session.refresh(proposal)
-        return created
+        from .preferences import propose_rules
+        return propose_rules(session, workspace_id=workspace_id, user_id=user_id)
 
     @staticmethod
-    def review_proposal(
-        session: Session,
-        *,
-        workspace_id: str,
-        user_id: str,
-        proposal_id: str,
-        approve: bool,
-    ) -> PreferenceRuleProposal:
-        TenantService.require_membership(session, workspace_id, user_id)
-        proposal = session.scalar(
-            select(PreferenceRuleProposal).where(
-                PreferenceRuleProposal.id == proposal_id,
-                PreferenceRuleProposal.workspace_id == workspace_id,
-                PreferenceRuleProposal.user_id == user_id,
-                PreferenceRuleProposal.status == "pending",
-            )
-        )
-        if proposal is None:
-            raise ValueError("pending proposal not found")
-        proposal.status = "approved" if approve else "rejected"
-        proposal.reviewed_at = utcnow()
-        if approve:
-            session.add(
-                PreferenceRule(
-                    workspace_id=workspace_id,
-                    user_id=user_id,
-                    proposal_id=proposal.id,
-                    rule_type=proposal.rule_type,
-                    condition=proposal.condition,
-                    action=proposal.action,
-                )
-            )
-        session.commit()
-        session.refresh(proposal)
-        return proposal
+    def review_proposal(session: Session, *, workspace_id: str, user_id: str,
+                        proposal_id: str, approve: bool) -> PreferenceRuleProposal:
+        from .preferences import review_rule
+        return review_rule(session, workspace_id=workspace_id, user_id=user_id,
+                           proposal_id=proposal_id, approve=approve)
 
 
 class AnalysisService:
@@ -618,6 +362,8 @@ class AnalysisService:
         TenantService.require_membership(session, workspace_id, user_id)
         article = TenantService.require_article(session, workspace_id, article_id)
         envelope = self.pipeline.analyze(article.to_dict())
+        from .search import index_article
+        index_article(session, article)
         output = envelope.to_dict()
         analysis_run = AnalysisRun(
                 workspace_id=workspace_id,
@@ -631,6 +377,10 @@ class AnalysisService:
         )
         session.add(analysis_run)
         session.flush()
+        session.query(ArticleTopic).filter(
+            ArticleTopic.workspace_id == workspace_id, ArticleTopic.article_id == article_id,
+            ArticleTopic.analysis_version == envelope.prompt_version,
+        ).delete(synchronize_session=False)
         for topic_score in envelope.topics:
             slug = _topic_slug(topic_score.name)
             topic = session.scalar(select(Topic).where(Topic.slug == slug))

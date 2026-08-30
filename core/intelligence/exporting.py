@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from bs4 import BeautifulSoup
+from markdownify import markdownify
 
 
 @dataclass(frozen=True)
@@ -24,8 +25,7 @@ def safe_filename(value: str, fallback: str = "article") -> str:
 
 
 def _text_content(article: dict) -> str:
-    source = str(article.get("content") or article.get("content_html") or "")
-    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", source)).strip()
+    return BeautifulSoup(_safe_html_content(article), "html.parser").get_text("\n", strip=True) or "正文尚未保存，当前下载仅包含文章元数据。"
 
 
 def _safe_web_url(value: object) -> str:
@@ -94,7 +94,9 @@ class SingleArticleExporter:
         frontmatter = "\n".join(
             f"{key}: {json.dumps(value, ensure_ascii=False, default=str)}" for key, value in metadata.items()
         )
-        content = _safe_html_content(article)
+        content = markdownify(_safe_html_content(article), heading_style="ATX", bullets="-", strip=["img"])
+        if not content.strip():
+            content = "正文尚未保存，当前下载仅包含文章元数据。"
         return f"---\n{frontmatter}\n---\n\n# {article.get('title') or 'Untitled'}\n\n{content}\n"
 
     @staticmethod
@@ -103,7 +105,7 @@ class SingleArticleExporter:
         source_url = html.escape(
             _safe_web_url(article.get("url") or article.get("link")), quote=True
         )
-        body = _safe_html_content(article)
+        body = _safe_html_content(article) or "<p>正文尚未保存，当前下载仅包含文章元数据。</p>"
         return (
             "<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>"
             "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; "
@@ -133,9 +135,10 @@ class SingleArticleExporter:
         styles["BodyText"].fontName = "STSong-Light"
         document = SimpleDocTemplate(buffer, pagesize=A4)
         story = [Paragraph(html.escape(str(article.get("title") or "Untitled")), styles["Title"]), Spacer(1, 12)]
-        text = html.escape(_text_content(article)).replace("\n", "<br/>")
+        text = _text_content(article)
         for offset in range(0, len(text), 2000):
-            story.append(Paragraph(text[offset : offset + 2000], styles["BodyText"]))
+            chunk = html.escape(text[offset : offset + 2000]).replace("\n", "<br/>")
+            story.append(Paragraph(chunk, styles["BodyText"]))
             story.append(Spacer(1, 8))
         document.build(story)
         return buffer.getvalue()

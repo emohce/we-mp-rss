@@ -335,7 +335,7 @@ class DailyAutomationScheduler:
                 workspace_id=workspace_id,
                 user_id=user_id,
                 kind="preference_refresh",
-                payload={"window_days": 90},
+                payload={"history": "all"},
                 idempotency_key=(
                     f"preference-refresh:{workspace_id}:{user_id}:{day.isoformat()}"
                 ),

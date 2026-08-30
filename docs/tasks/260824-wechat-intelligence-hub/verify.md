@@ -173,7 +173,11 @@ Documentation level: `controlled`
 - WU-12: 53 intelligence tests passed, including multi-day fresh polling, independent backfill, truncated
   coverage, expired/replaced leases, atomic rollback, private scope, durable layered budgets and disabled accounts.
   Invalid provider payloads fail closed instead of being interpreted as an exhausted article list.
-- WU-13..16: pending; historical 39-test evidence does not validate daily coverage or ranking parity.
+- WU-13: 60 intelligence tests passed. New daily tests verify the pre-publication gate, frozen expected-source
+  cohort, disabled/failed source visibility, automatic late collection/analysis revisions, immutable/idempotent
+  snapshots, 601-article input without a 500-item cap, old-date reconciliation and revocable latest-version shares.
+  API contracts verify history, revision display, no-store public pages and revocation; affected Python compiles.
+- WU-14..16: pending; historical 39-test evidence does not validate ranking parity or reader state.
 - Automatic global router reports an oversized response owner and registry/loading-graph drift. The user permits
   bypassing only that automatic check for this implementation turn; no global rule was changed.
 - Verification route: scoped docs plus isolated intelligence package contracts and affected frontend checks.

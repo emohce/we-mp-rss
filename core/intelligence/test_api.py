@@ -172,6 +172,13 @@ class IntelligenceApiContractTest(unittest.TestCase):
         self.assertIn("2026-08-24", page.text)
         self.assertNotIn("完整正文", page.text)
         self.assertIn("Content-Security-Policy", page.headers)
+        self.assertIn("修订 1", page.text)
+        self.assertEqual(page.headers["cache-control"], "no-store")
+        history = self.client.get("/api/v2/intelligence/digests/2026-08-24/revisions", params=params)
+        self.assertEqual(history.json()["data"][0]["revision"], 1)
+        revoked = self.client.post(f"/api/v2/intelligence/shares/{shared.json()['data']['id']}/revoke", params=params)
+        self.assertEqual(revoked.status_code, 200)
+        self.assertEqual(self.client.get(share_url).status_code, 404)
 
     def test_openapi_exposes_v2_contract_and_share_renderer_escapes_input(self) -> None:
         paths = self.app.openapi()["paths"]

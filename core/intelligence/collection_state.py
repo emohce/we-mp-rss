@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from core.models.article import Article
 
 from .idempotency import normalize_idempotency_key
+from .daily import queue_reconciliations
 from .jobs import ClaimedJob
 from .models import (
     CollectionJob, CollectionRun, CollectorAccount, OutboxEvent, SourceCheckpoint,
@@ -169,6 +170,8 @@ class CollectionState:
                          "state": run.state, "pages": run.pages},
                 idempotency_key=f"collection-page:{run.id}:{run.pages}",
             ))
+            queue_reconciliations(session, workspace_ids=targets, article_ids=ids,
+                                  collection_job_id=job.id, cause=f"page:{run.id}:{run.pages}", now=now)
             session.commit()
             return run.state if finished else "page_persisted"
 

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from core.models.article import Article
 
 from .idempotency import normalize_idempotency_key
+from .daily import queue_reconciliations
 from .models import (
     CollectionJob,
     CollectorCursor,
@@ -314,6 +315,10 @@ class JobRepository:
                     updated_at=utcnow(),
                 )
             )
+            if result.rowcount == 1:
+                job = session.get(CollectionJob, job_id)
+                queue_reconciliations(session, collection_job_id=job_id,
+                                      cause=f"collection-retry:{job_id}:{job.attempts}", now=utcnow())
             session.commit()
             return result.rowcount == 1
 
@@ -335,5 +340,8 @@ class JobRepository:
                     updated_at=utcnow(),
                 )
             )
+            if result.rowcount == 1:
+                queue_reconciliations(session, collection_job_id=job_id,
+                                      cause=f"collection-failed:{job_id}", now=utcnow())
             session.commit()
             return result.rowcount == 1

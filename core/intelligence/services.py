@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 import hashlib
 import json
 import re
@@ -15,6 +16,7 @@ from core.models.article import Article
 from core.models.base import DATA_STATUS
 
 from .analysis import AnalysisEnvelope, AnalyzerPipeline
+from .daily import queue_reconciliations
 from .idempotency import normalize_idempotency_key
 from .models import (
     AnalysisRun,
@@ -23,6 +25,7 @@ from .models import (
     CollectorAccount,
     Digest,
     DigestItem,
+    DigestRevision,
     FeedbackEvent,
     OutboxEvent,
     PreferenceRule,
@@ -616,8 +619,7 @@ class AnalysisService:
         article = TenantService.require_article(session, workspace_id, article_id)
         envelope = self.pipeline.analyze(article.to_dict())
         output = envelope.to_dict()
-        session.add(
-            AnalysisRun(
+        analysis_run = AnalysisRun(
                 workspace_id=workspace_id,
                 article_id=article_id,
                 provider=envelope.provider,
@@ -626,8 +628,9 @@ class AnalysisService:
                 status="completed",
                 summary=envelope.summary,
                 output=output,
-            )
         )
+        session.add(analysis_run)
+        session.flush()
         for topic_score in envelope.topics:
             slug = _topic_slug(topic_score.name)
             topic = session.scalar(select(Topic).where(Topic.slug == slug))
@@ -655,7 +658,7 @@ class AnalysisService:
                 )
             else:
                 link.confidence = topic_score.confidence
-        event_key = f"analysis:{workspace_id}:{article_id}:{envelope.prompt_version}"
+        event_key = f"analysis:{analysis_run.id}"
         if session.scalar(select(OutboxEvent.id).where(OutboxEvent.idempotency_key == event_key)) is None:
             session.add(
                 OutboxEvent(
@@ -667,6 +670,8 @@ class AnalysisService:
                     idempotency_key=event_key,
                 )
             )
+        queue_reconciliations(session, workspace_ids=[workspace_id], article_ids=[article_id],
+                              cause=f"analysis-result:{analysis_run.id}", now=utcnow())
         session.commit()
         return envelope
 
@@ -839,116 +844,11 @@ class DigestService:
         workspace_id: str,
         user_id: str,
         digest_date: date,
+        now: datetime | None = None,
     ) -> Digest:
-        TenantService.require_membership(session, workspace_id, user_id)
-        start_ts, cutoff_ts = DEFAULT_SCHEDULE.article_window(digest_date)
-        state_alias = aliased(UserArticleState)
-        rows = session.execute(
-            select(Article, state_alias)
-            .join(WorkspaceArticle, WorkspaceArticle.article_id == Article.id)
-            .outerjoin(
-                state_alias,
-                and_(
-                    state_alias.workspace_id == workspace_id,
-                    state_alias.user_id == user_id,
-                    state_alias.article_id == Article.id,
-                ),
-            )
-            .where(
-                WorkspaceArticle.workspace_id == workspace_id,
-                Article.publish_time >= start_ts,
-                Article.publish_time <= cutoff_ts,
-                Article.status != DATA_STATUS.DELETED,
-                or_(state_alias.id.is_(None), state_alias.is_hidden.is_(False)),
-            )
-            .order_by(Article.publish_time.desc())
-            .limit(500)
-        ).all()
-        rules = session.scalars(
-            select(PreferenceRule).where(
-                PreferenceRule.workspace_id == workspace_id,
-                PreferenceRule.user_id == user_id,
-                PreferenceRule.is_active.is_(True),
-            )
-        ).all()
-        source_adjustments: dict[str, float] = {}
-        for rule in rules:
-            if rule.rule_type == "source_preference":
-                for source_id in (rule.condition or {}).get("source_ids", []):
-                    source_adjustments[str(source_id)] = float((rule.action or {}).get("rank_boost", 0))
-
-        article_ids = [article.id for article, _ in rows]
-        latest_analysis: dict[str, AnalysisRun] = {}
-        if article_ids:
-            for run in session.scalars(
-                select(AnalysisRun)
-                .where(
-                    AnalysisRun.workspace_id == workspace_id,
-                    AnalysisRun.article_id.in_(article_ids),
-                )
-                .order_by(AnalysisRun.article_id, AnalysisRun.created_at.desc())
-            ):
-                latest_analysis.setdefault(run.article_id, run)
-
-        scored: list[tuple[float, Article, str]] = []
-        for article, state in rows:
-            run = latest_analysis.get(article.id)
-            _, relevance = ArticleService._relevance(run, state)
-            score = relevance + source_adjustments.get(str(article.mp_id or ""), 0)
-            if state and state.is_favorite:
-                score += 0.25
-            reason = str((run.output or {}).get("reason", "按时间与来源进入当日汇总")) if run else "按时间与来源进入当日汇总"
-            scored.append((score, article, reason))
-        scored.sort(key=lambda item: (item[0], item[1].publish_time or 0), reverse=True)
-
-        day_value = digest_date.isoformat()
-        digest = session.scalar(
-            select(Digest).where(
-                Digest.workspace_id == workspace_id,
-                Digest.user_id == user_id,
-                Digest.digest_date == day_value,
-            )
-        )
-        if digest is None:
-            digest = Digest(
-                workspace_id=workspace_id,
-                user_id=user_id,
-                digest_date=day_value,
-                title=f"{day_value} 微信公众号日报",
-            )
-            session.add(digest)
-            session.flush()
-        else:
-            session.query(DigestItem).filter(DigestItem.digest_id == digest.id).delete()
-        digest.status = "published"
-        digest.summary = f"截止 07:50，共汇总 {len(scored)} 篇文章。"
-        digest.generated_at = utcnow()
-        for rank, (score, article, reason) in enumerate(scored, 1):
-            session.add(
-                DigestItem(
-                    digest_id=digest.id,
-                    article_id=article.id,
-                    rank=rank,
-                    relevance_score=score,
-                    reason=reason[:500],
-                    is_late=False,
-                )
-            )
-        event_key = f"digest-published:{digest.id}"
-        if session.scalar(select(OutboxEvent.id).where(OutboxEvent.idempotency_key == event_key)) is None:
-            session.add(
-                OutboxEvent(
-                    workspace_id=workspace_id,
-                    event_type="digest.published",
-                    aggregate_type="digest",
-                    aggregate_id=digest.id,
-                    payload={"digest_id": digest.id, "digest_date": day_value, "user_id": user_id},
-                    idempotency_key=event_key,
-                )
-            )
-        session.commit()
-        session.refresh(digest)
-        return digest
+        from .digests import generate_digest
+        return generate_digest(session, workspace_id=workspace_id, user_id=user_id,
+                               digest_date=digest_date, now=now)
 
     @staticmethod
     def serialize(session: Session, *, workspace_id: str, user_id: str, digest_date: str) -> dict:
@@ -962,6 +862,17 @@ class DigestService:
         )
         if digest is None:
             raise ValueError("digest not found")
+        revision = session.scalar(select(DigestRevision).where(
+            DigestRevision.digest_id == digest.id, DigestRevision.revision == digest.revision,
+        ))
+        if revision is not None:
+            result = copy.deepcopy(revision.snapshot)
+            result.update(id=digest.id, generated_at=digest.generated_at)
+            visible_ids = set(session.scalars(select(WorkspaceArticle.article_id).join(
+                Article, Article.id == WorkspaceArticle.article_id,
+            ).where(WorkspaceArticle.workspace_id == workspace_id, Article.status != DATA_STATUS.DELETED)))
+            result["items"] = [item for item in result.get("items", []) if item["article"]["id"] in visible_ids]
+            return result
         items = []
         for item in session.scalars(
             select(DigestItem)
@@ -991,6 +902,8 @@ class DigestService:
             "title": digest.title,
             "summary": digest.summary,
             "status": digest.status,
+            "revision": digest.revision,
+            "coverage": digest.coverage or {},
             "generated_at": digest.generated_at,
             "items": items,
         }
@@ -1026,6 +939,8 @@ class DigestService:
                 "title": digest.title,
                 "summary": digest.summary,
                 "status": digest.status,
+                "revision": digest.revision,
+                "coverage": digest.coverage or {},
                 "generated_at": digest.generated_at,
                 "item_count": int(count or 0),
             }
@@ -1066,6 +981,19 @@ class DigestService:
         if digest is None:
             raise AccessDenied("shared digest no longer exists")
         return link, digest
+
+    @staticmethod
+    def revoke_share(session, *, workspace_id, user_id, share_id):
+        TenantService.require_membership(session, workspace_id, user_id)
+        link = session.scalar(select(ShareLink).join(Digest, Digest.id == ShareLink.digest_id).where(
+            ShareLink.id == share_id, ShareLink.workspace_id == workspace_id,
+            Digest.workspace_id == workspace_id, Digest.user_id == user_id,
+        ))
+        if link is None:
+            raise AccessDenied("share link not found")
+        link.revoked_at = link.revoked_at or utcnow()
+        session.commit()
+        return link
 
     @staticmethod
     def serialize_public_share(session: Session, token: str) -> dict:

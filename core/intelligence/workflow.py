@@ -11,10 +11,15 @@ from sqlalchemy.orm import Session
 
 from .jobs import JobRepository
 from .idempotency import normalize_idempotency_key
+from .daily import queue_changed_coverage, queue_reconciliations
 from .models import (
+    CollectionJob,
     CollectorAccount,
+    DailyRun,
+    DailyRunSource,
     OutboxEvent,
     WorkflowJob,
+    Workspace,
     WorkspaceMembership,
     WorkspaceSubscription,
     utcnow,
@@ -89,6 +94,20 @@ class WorkflowJobRepository:
         now = now or utcnow()
         for _ in range(3):
             with self.session_factory() as session:
+                exhausted = session.scalars(select(WorkflowJob).where(
+                    WorkflowJob.state == "running", WorkflowJob.lease_expires_at <= now,
+                    WorkflowJob.attempts >= WorkflowJob.max_attempts,
+                )).all()
+                for abandoned in exhausted:
+                    abandoned.state = "failed"
+                    abandoned.lease_token = ""
+                    abandoned.lease_expires_at = None
+                    abandoned.last_error = "lease_exhausted"
+                    if abandoned.kind == "article_analysis":
+                        queue_reconciliations(session, workspace_ids=[abandoned.workspace_id],
+                                              article_ids=[str(abandoned.payload.get("article_id", ""))],
+                                              cause=f"analysis-failed:{abandoned.id}", now=now)
+                session.commit()
                 job_id = session.scalar(
                     select(WorkflowJob.id)
                     .where(
@@ -113,6 +132,8 @@ class WorkflowJobRepository:
                     update(WorkflowJob)
                     .where(
                         WorkflowJob.id == job_id,
+                        WorkflowJob.due_at <= now,
+                        WorkflowJob.attempts < WorkflowJob.max_attempts,
                         or_(
                             WorkflowJob.state.in_(["queued", "retry"]),
                             and_(
@@ -148,19 +169,21 @@ class WorkflowJobRepository:
                 )
         return None
 
-    def complete(self, job: ClaimedWorkflowJob) -> bool:
+    def complete(self, job: ClaimedWorkflowJob, *, now: datetime | None = None) -> bool:
+        now = now or utcnow()
         with self.session_factory() as session:
             stored = session.scalar(
                 select(WorkflowJob).where(
                     WorkflowJob.id == job.id,
                     WorkflowJob.state == "running",
                     WorkflowJob.lease_token == job.lease_token,
+                    WorkflowJob.lease_expires_at > now,
                 )
             )
             if stored is None:
                 return False
             stored.state = "completed"
-            stored.completed_at = utcnow()
+            stored.completed_at = now
             stored.lease_token = ""
             stored.lease_expires_at = None
             stored.last_error = ""
@@ -175,6 +198,12 @@ class WorkflowJobRepository:
                     idempotency_key=event_key,
                 )
             )
+            if stored.kind == "article_analysis":
+                queue_reconciliations(
+                    session, workspace_ids=[stored.workspace_id],
+                    article_ids=[str(stored.payload.get("article_id", ""))],
+                    cause=f"analysis:{stored.id}", now=now,
+                )
             session.commit()
             return True
 
@@ -198,6 +227,10 @@ class WorkflowJobRepository:
             stored.lease_token = ""
             stored.lease_expires_at = None
             stored.last_error = error[:500]
+            if stored.state == "failed" and stored.kind == "article_analysis":
+                queue_reconciliations(session, workspace_ids=[stored.workspace_id],
+                                      article_ids=[str(stored.payload.get("article_id", ""))],
+                                      cause=f"analysis-failed:{stored.id}", now=now)
             session.commit()
             return True
 
@@ -220,7 +253,8 @@ class DailyAutomationScheduler:
         self.collection_jobs = collection_jobs
         self.workflow_jobs = workflow_jobs
 
-    def schedule_day(self, day: date, *, include_collection: bool = True) -> dict[str, int]:
+    def schedule_day(self, day: date, *, include_collection: bool = True, now: datetime | None = None) -> dict[str, int]:
+        now = now or utcnow()
         moments = DEFAULT_SCHEDULE.moments(day)
         collection_due = _naive_utc(moments["collect"])
         digest_due = _naive_utc(moments["digest"])
@@ -235,47 +269,51 @@ class DailyAutomationScheduler:
             ]
 
             scheduled_collection = 0
-            scheduled_sources: set[tuple[str, str, str]] = set()
-            for subscription in subscriptions if include_collection else []:
-                account = session.scalar(
-                    select(CollectorAccount)
-                    .where(
+            workspace_ids = {wid for wid, _ in memberships} | {s.workspace_id for s in subscriptions}
+            for workspace_id in sorted(workspace_ids):
+                # Serializes cohort creation; subscription changes later do not rewrite this snapshot.
+                session.execute(update(Workspace).where(Workspace.id == workspace_id)
+                                .values(updated_at=Workspace.updated_at))
+                run = session.scalar(select(DailyRun).where(
+                    DailyRun.workspace_id == workspace_id, DailyRun.run_date == day.isoformat(),
+                ))
+                if run is not None:
+                    queue_changed_coverage(session, run, now)
+                    continue
+                run = DailyRun(workspace_id=workspace_id, run_date=day.isoformat(),
+                               cutoff_at=_naive_utc(moments["cutoff"]), publish_after=digest_due,
+                               collection_enabled=include_collection, created_at=now)
+                session.add(run)
+                session.flush()
+                for subscription in (s for s in subscriptions if s.workspace_id == workspace_id):
+                    account = session.scalar(select(CollectorAccount).where(
                         CollectorAccount.provider == subscription.provider,
                         CollectorAccount.status.in_(["healthy", "probe"]),
-                        or_(
-                            CollectorAccount.workspace_id == subscription.workspace_id,
-                            CollectorAccount.workspace_id.is_(None),
-                        ),
-                    )
-                    .order_by(CollectorAccount.workspace_id.is_not(None))
-                    .limit(1)
-                )
-                account_key = account.id if account else "unconfigured"
-                source_key = (account_key, subscription.provider, subscription.source_id)
-                if source_key in scheduled_sources:
+                        or_(CollectorAccount.workspace_id == workspace_id,
+                            CollectorAccount.workspace_id.is_(None)),
+                    ).order_by(CollectorAccount.workspace_id.is_(None)).limit(1))
+                    skip = "collection_disabled" if not include_collection else ("account_unconfigured" if not account else "")
+                    job = None
+                    if not skip:
+                        key = normalize_idempotency_key(
+                            f"daily-collection:{account.id}:{subscription.provider}:{subscription.source_id}:{day.isoformat()}", 160,
+                        )
+                        job = session.scalar(select(CollectionJob).where(CollectionJob.idempotency_key == key))
+                        if job is None:
+                            job = CollectionJob(workspace_id=workspace_id, provider=subscription.provider,
+                                                source_id=subscription.source_id, account_id=account.id,
+                                                kind="head", idempotency_key=key, priority=20,
+                                                payload={"page_budget": 3, "schedule_date": day.isoformat()},
+                                                due_at=collection_due)
+                            session.add(job)
+                            session.flush()
+                            scheduled_collection += 1
+                    session.add(DailyRunSource(daily_run_id=run.id, provider=subscription.provider,
+                                              source_id=subscription.source_id,
+                                              job_id=job.id if job else None, skipped_reason=skip))
                     subscription.next_due_at = _naive_utc(
                         DEFAULT_SCHEDULE.moments(day + timedelta(days=1))["collect"]
                     )
-                    continue
-                scheduled_sources.add(source_key)
-                _, created = self.collection_jobs.enqueue(
-                    workspace_id=subscription.workspace_id,
-                    provider=subscription.provider,
-                    source_id=subscription.source_id,
-                    account_id=account.id if account else None,
-                    kind="head",
-                    idempotency_key=(
-                        f"daily-collection:{account_key}:{subscription.provider}:"
-                        f"{subscription.source_id}:{day.isoformat()}"
-                    ),
-                    payload={"page_budget": 3, "schedule_date": day.isoformat()},
-                    priority=20,
-                    due_at=collection_due,
-                )
-                scheduled_collection += int(created)
-                subscription.next_due_at = _naive_utc(
-                    DEFAULT_SCHEDULE.moments(day + timedelta(days=1))["collect"]
-                )
             session.commit()
 
         scheduled_digest = 0
@@ -323,17 +361,20 @@ class WorkflowWorker:
         self.repository = repository
 
     def run_once(self, *, now: datetime | None = None) -> str:
+        fixed_clock = now is not None
+        now = now or utcnow()
         claimed = self.repository.claim_next(now=now)
         if claimed is None:
             return "idle"
         try:
             with self.session_factory() as session:
-                if claimed.kind == "daily_digest":
+                if claimed.kind in {"daily_digest", "digest_reconcile"}:
                     DigestService.generate(
                         session,
                         workspace_id=claimed.workspace_id,
                         user_id=claimed.user_id,
                         digest_date=date.fromisoformat(str(claimed.payload["digest_date"])),
+                        now=now,
                     )
                 elif claimed.kind == "article_analysis":
                     AnalysisService().analyze_article(
@@ -350,8 +391,7 @@ class WorkflowWorker:
                     )
                 else:
                     raise ValueError("unsupported workflow kind")
-            self.repository.complete(claimed)
-            return "completed"
+            return "completed" if self.repository.complete(claimed, now=now if fixed_clock else utcnow()) else "lease_lost"
         except Exception as exc:
             self.repository.retry_or_fail(claimed, type(exc).__name__, now=now)
             return "retry"

@@ -19,6 +19,8 @@ from core.db import DB
 from core.intelligence.exporting import SingleArticleExporter
 from core.intelligence.models import (
     ArticleTopic,
+    Digest,
+    DigestRevision,
     PreferenceRuleProposal,
     SourceProfile,
     Topic,
@@ -628,6 +630,34 @@ def public_digest_json(token: str, session: SessionDependency):
         raise _service_error(exc) from exc
 
 
+@router.post("/shares/{share_id}/revoke", summary="撤销自己创建的日报分享")
+def revoke_digest_share(share_id: str, session: SessionDependency, current_user: CurrentUser,
+                        workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        link = DigestService.revoke_share(session, workspace_id=workspace_id, user_id=user_id, share_id=share_id)
+        return success_response({"id": link.id, "revoked_at": link.revoked_at})
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.get("/digests/{digest_date}/revisions", summary="读取日报修订历史")
+def list_digest_revisions(digest_date: date, session: SessionDependency, current_user: CurrentUser,
+                          workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        rows = session.scalars(select(DigestRevision).join(Digest, Digest.id == DigestRevision.digest_id).where(
+            Digest.workspace_id == workspace_id, Digest.user_id == user_id,
+            Digest.digest_date == digest_date.isoformat(),
+        ).order_by(DigestRevision.revision.desc()).limit(100))
+        return success_response([{"revision": row.revision, "created_at": row.created_at,
+                                  "status": row.snapshot.get("status"), "coverage": row.snapshot.get("coverage", {}),
+                                  "item_count": len(row.snapshot.get("items", []))} for row in rows])
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
 def _safe_web_url(value: object) -> str:
     url = str(value or "").strip()
     return url if re.match(r"^https?://", url, flags=re.I) else "#"
@@ -649,7 +679,7 @@ def _render_digest_page(data: dict) -> str:
             "<article class='card'>"
             f"<div class='rank'>{int(item.get('rank') or 0):02d}</div>"
             "<div class='card-body'>"
-            f"<div class='meta'>{source}{topics}</div>"
+            f"<div class='meta'>{source}{topics}{'<span>迟到补录</span>' if item.get('is_late') else ''}</div>"
             f"<h2><a href='{url}' rel='noopener noreferrer' target='_blank'>{title}</a></h2>"
             f"<p>{summary}</p>"
             f"<small>{html.escape(str(item.get('reason') or ''))}</small>"
@@ -658,6 +688,8 @@ def _render_digest_page(data: dict) -> str:
     day = html.escape(str(data.get("date") or ""))
     title = html.escape(str(data.get("title") or "微信公众号日报"))
     summary = html.escape(str(data.get("summary") or ""))
+    completeness = "采集与分析已完成" if (data.get("coverage") or {}).get("complete") else "部分完成 · 尚有待采集或待分析内容"
+    revision = int(data.get("revision") or 0)
     card_markup = "".join(cards) if cards else '<div class="empty">这一天暂无入选文章</div>'
     return (
         "<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>"
@@ -673,7 +705,8 @@ def _render_digest_page(data: dict) -> str:
         "h2{font-size:20px;line-height:1.35;margin:8px 0}a{color:#172018;text-decoration:none}a:hover{text-decoration:underline}"
         "p{line-height:1.7;color:#475149;margin:8px 0}small{color:#768078}.empty{text-align:center;padding:56px;color:#768078}"
         "</style></head><body><main class='shell'>"
-        f"<div class='date'>{day}</div><h1>{title}</h1><p class='lead'>{summary}</p>"
+        f"<div class='date'>{day} · 修订 {revision}</div><h1>{title}</h1>"
+        f"<p>{completeness}</p><p class='lead'>{summary}</p>"
         f"{card_markup}"
         "</main></body></html>"
     )
@@ -686,7 +719,7 @@ def public_digest_page(token: str, session: SessionDependency):
         return HTMLResponse(
             _render_digest_page(data),
             headers={
-                "Cache-Control": "private, max-age=60",
+                "Cache-Control": "no-store",
                 "Content-Security-Policy": (
                     "default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; "
                     "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"

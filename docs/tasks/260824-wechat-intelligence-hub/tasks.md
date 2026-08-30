@@ -28,8 +28,8 @@ Documentation level: `controlled`
 | WU-10 Correctness plan | 1 | 1 | main | app-root | accepted | RAW-006, exact manifest, code-link/diff checks | none | local commit then WU-11 |
 | WU-11 Versioned schema | 1 | 1 | main | app-root | accepted | 43 focused tests; frozen offline SQL, no startup DDL | live mutation excluded | local schema batch and DBA handoff |
 | WU-12 Fresh collection | 1 | 1 | main | app-root | accepted | 53 focused tests; head/backfill, fenced page transaction, durable budgets | live providers excluded | local collector batch |
-| WU-13 Digest reconciliation | 1 | 1 | main | app-root | implementing | daily run/revision schema and collection result available | none | daily coverage and late tests |
-| WU-14 Unified preference/content | 1 | 1 | main | app-root | pending | list/digest ranking and content path differ | none | common ranking and local export |
+| WU-13 Digest reconciliation | 1 | 1 | main | app-root | accepted | 60 focused tests; frozen cohort, partial/late revisions, stable/revocable share | live delivery excluded | local digest batch |
+| WU-14 Unified preference/content | 1 | 1 | main | app-root | implementing | revisioned digest accepts full candidate window | none | common ranking and local export |
 | WU-15 Floating workspace | 1 | 1 | main | app-root | pending | nested reader and implicit admin import | browser runtime excluded | one state owner and explicit import |
 | WU-16 Connectors/operations | 1 | 1 | main | app-root | pending | runtime registry absent | live providers excluded | offline contracts and status API |
 

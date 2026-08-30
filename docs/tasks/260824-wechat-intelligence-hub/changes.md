@@ -113,5 +113,7 @@ Updated: 2026-08-25
 | [rate policy](../../../core/intelligence/rate_limit.py#L1)、[providers](../../../core/intelligence/providers.py#L1) | 数据库分层预算；损坏的上游响应不得作为空页推进 |
 | [scheduler](../../../core/intelligence/workflow.py#L1)、[services](../../../core/intelligence/services.py#L1) | 每日首页任务、私有账号隔离、共享账号并发创建保护 |
 | [collection regressions](../../../core/intelligence/test_collection_state.py#L1)、[worker tests](../../../core/intelligence/test_workers.py#L1)、[service tests](../../../core/intelligence/test_services.py#L1) | 多日、恢复、页预算、租户和契约回归 |
+| [daily coverage](../../../core/intelligence/daily.py#L1)、[digests](../../../core/intelligence/digests.py#L1) | 固定来源清单、部分发布、迟到补录、版本化快照和 outbox |
+| [daily regressions](../../../core/intelligence/test_daily.py#L1)、[API](../../../apis/intelligence.py#L1)、[API tests](../../../core/intelligence/test_api.py#L1) | 601 篇无截断、修订历史、稳定分享链接与撤销/隐私 |
 
 未实施：真实数据库迁移、账号登录、收费调用、运行服务、部署、推送及全局规则修改。

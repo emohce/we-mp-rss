@@ -1,14 +1,15 @@
 # Database System Map
 
-Last verified: 2026-08-25
-Evidence: `code + document`; no live infrastructure
+Last verified: 2026-08-30
+Evidence: `code + document + disposable SQLite contracts`; no live infrastructure
 
 ```text
 FastAPI / jobs / provider workers
   -> SQLAlchemy engine and transactions
      -> Lite: SQLite
      -> Standard/Distributed: PostgreSQL
-  -> durable collection jobs, cursors, rate-limit ledger and outbox
+  -> durable collection jobs, mode-specific checkpoints, request budgets and outbox
+  -> daily source cohort -> coverage barrier -> immutable digest revisions
   -> content identity -> local or S3-compatible object store
 
 Optional acceleration/transport
@@ -26,6 +27,8 @@ Authority
 - v2 profiles: `core/intelligence/settings.py`.
 - v2 models: `core/intelligence/models.py`.
 - schema contract: `core/intelligence/migration.py`.
+- collection transaction: `core/intelligence/collection_state.py`; legacy cursors are not daily polling state.
+- daily coverage/revisions: `core/intelligence/daily.py`, `core/intelligence/digests.py`.
 - Redis/MQTT/outbox: `core/intelligence/events.py`, `core/intelligence/outbox.py`.
 - content objects: `core/intelligence/storage.py`.
 - deployment example: `compose/docker-compose.intelligence.yaml`.

@@ -56,6 +56,7 @@ def claim_next_article(session, excluded_ids=None, now_millis: int = None):
     while True:
         query = session.query(Article).filter(
             Article.has_content == 0,
+            ~Article.id.like("connector:%"),
             Article.status != DATA_STATUS.FETCHING,
             Article.status != DATA_STATUS.DELETED,
             or_(Article.fix_fail_count.is_(None), Article.fix_fail_count < max_failures),
@@ -69,6 +70,7 @@ def claim_next_article(session, excluded_ids=None, now_millis: int = None):
 
         claimed = session.query(Article).filter(
             Article.id == candidate.id,
+            ~Article.id.like("connector:%"),
             Article.has_content == 0,
             Article.status == candidate.status,
             or_(Article.fix_fail_count.is_(None), Article.fix_fail_count < max_failures),

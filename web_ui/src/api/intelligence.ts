@@ -131,6 +131,25 @@ export interface PreferenceRule {
 export interface SourceOption { id: string; name: string; provider: string }
 export interface FeedbackRecord { id: string; article_id: string; event_type: string; value: Record<string, unknown>; created_at: string }
 export interface LearningStatus { events: number; distinct_articles: number; span_days: number; eligible: boolean; history_scope: string }
+export interface ConnectorCapability {
+  provider: string; label: string; supplier_state: string; offline_contract: string; capabilities: string[]
+  runtime_policy: string; limits: string; connection_status: string; automatic_fallback: boolean
+}
+export interface OperationsSnapshot {
+  observed_at: string; runtime_verified: boolean; delivery_mode: string
+  configured: { jobs: boolean; collector: boolean; redis: boolean; mqtt: boolean }
+  collection_counts: Record<string, number>; workflow_counts: Record<string, number>; outbox_counts: Record<string, number>
+  recent_jobs: Array<{ id: string; provider: string; source_id: string; mode: string; state: string; attempts: number; due_at: string; error_code: string }>
+  accounts: Array<{ provider: string; state: string; cooldown_until?: string; failure_count: number; last_error: string }>
+  checkpoints: Array<{ source_id: string; mode: string; version: number; last_success_at?: string }>
+  recent_digests: Array<{ date: string; revision: number; status: string; coverage: Partial<DigestCoverage> }>
+  usage: Array<{ provider: string; status: string; billable: boolean; units: number; requests: number }>
+  connectors: ConnectorCapability[]
+}
+export interface ConnectorPreview {
+  format: string; count: number; can_import: boolean; warning: string
+  entries: Array<{ external_id?: string; title?: string; url?: string; name?: string; public_url?: string; groups?: string[]; requires_secret_ref?: boolean }>
+}
 
 export interface PreferenceProposal {
   id: string
@@ -285,3 +304,6 @@ export const updateSubscription = (workspaceId: string, id: string, status: stri
 export const enqueueBackfill = (workspaceId: string, id: string, requestId: string) => request({ method: 'POST', url: `subscriptions/${encodeURIComponent(id)}/backfill`, params: { workspace_id: workspaceId }, data: { request_id: requestId, page_budget: 3 } })
 export const importLegacyBatch = (workspaceId: string) => request<{ attached: number; has_more: boolean }>({ method: 'POST', url: `workspaces/${encodeURIComponent(workspaceId)}/legacy-import`, data: { confirm: true, batch_size: 200 } })
 export const revokeDigestShare = (workspaceId: string, id: string) => request({ method: 'POST', url: `shares/${encodeURIComponent(id)}/revoke`, params: { workspace_id: workspaceId } })
+export const getIntelligenceOperations = (workspaceId: string) => request<OperationsSnapshot>({ method: 'GET', url: 'operations', params: { workspace_id: workspaceId } })
+export const previewConnectorFile = (workspaceId: string, provider: string, content: string) => request<ConnectorPreview>({ method: 'POST', url: 'connectors/preview', params: { workspace_id: workspaceId }, data: { provider, content } })
+export const importConnectorFile = (workspaceId: string, provider: string, sourceKey: string, content: string, requestId: string) => request<{ imported: number; status: string }>({ method: 'POST', url: 'connectors/import', params: { workspace_id: workspaceId }, data: { provider, source_key: sourceKey, content, request_id: requestId, confirm_public_content: true } })

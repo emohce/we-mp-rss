@@ -36,6 +36,16 @@ Execution remains governed by the [v3 handoff](../ai-db-tasks/260830/0941-intell
 - V3 collector binds shared content hashes and updates search documents in the page transaction. Ranking uses
   personal correction/override/rule state in SQL; saved filters and rule revocation remain workspace/user-scoped.
   SQLite FTS5 fixture queries pass; PostgreSQL expression compilation is not a live query-plan acceptance.
+- File imports use connector identity/usage records under a workspace lock, atomically adding article links,
+  search documents and analysis/daily work. Idempotent replay does not overwrite canonical fields or feedback.
+  The ledger counts recorded units, not supplier monetary balance; default billing is denied. Installation,
+  remote cursor and supplier receipt models remain future scope.
+- Null transport retains pending outbox rows without claims. Acknowledgement/retry is fenced by live leases;
+  historical delivered rows are not reclassified or repaired. Legacy article visibility is still global in v1,
+  so current manual imports require administrator-confirmed public content.
+- The final guarded suite passes 91 isolated tests, with no I/O attempts or legacy runtime imports. An earlier
+  test-import Redis connection is a separate incident; possible queue-status writes remain unverified and do
+  not establish accepted infrastructure or live SQL-schema evidence.
 - Disposable SQLite tests previously exercised model/service contracts.
 - SQLite, PostgreSQL and MySQL dialects previously rendered offline DDL; MySQL renderability is portability evidence, not an accepted production profile.
 - No authorized live schema inventory, row counts, collation/charset, extension list, migration history or unexpected-object review exists yet.

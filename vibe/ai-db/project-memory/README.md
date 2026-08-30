@@ -1,7 +1,7 @@
 # We-MP-RSS Database Memory
 
 Tool: tool-neutral (Codex, Claude, Grok, and any CodeNote-routed agent)
-Last verified: 2026-08-25 (`code + document + prior focused tests`; no live DB)
+Last verified: 2026-08-30 (`code + offline SQL + guarded isolated tests`; no live SQL DB acceptance)
 
 ## Stable Owners
 
@@ -13,7 +13,7 @@ Last verified: 2026-08-25 (`code + document + prior focused tests`; no live DB)
 | [business_glossary.md](business_glossary.md) | Terms mapped to durable objects | current Spec + models |
 | [core_relationships.md](core_relationships.md) | Key declared/logical relations | SQLAlchemy model evidence |
 | [query_patterns.md](query_patterns.md) | Reusable read-only inspection routes | no connection authorization |
-| [delivery_log.md](delivery_log.md) | Accepted DB documentation deliveries | initialization only |
+| [delivery_log.md](delivery_log.md) | Accepted DB documentation deliveries | initialization and frozen v3 handoff; not execution |
 | [handoff.md](handoff.md) | Open environment/schema/recovery gates | active |
 
 ## Safety

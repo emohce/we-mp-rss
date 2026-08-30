@@ -3,7 +3,7 @@
     <button ref="launcher" class="intelligence-fab" type="button" aria-label="打开公众号智能聚合工作区" :aria-expanded="state.visible" @click="open">智能聚合</button>
   </a-tooltip>
   <Teleport to="body"><div id="intelligence-overlay-root" class="intelligence-overlay-root" /></Teleport>
-  <a-drawer :visible="state.visible" popup-container="#intelligence-overlay-root" placement="right" :width="viewport < 720 ? '100%' : state.width"
+  <a-drawer :visible="state.visible" popup-container="#intelligence-overlay-root" placement="right" :width="viewport < 720 ? '100%' : Math.min(state.width, viewport - 16)"
     :mask="false" :mask-closable="false" :esc-to-close="false" :closable="false" :footer="false"
     :unmount-on-close="true" body-class="intelligence-drawer-body" @cancel="closeHub" @open="focusPanel">
     <template #title>
@@ -25,7 +25,7 @@
       </nav>
       <p v-if="!ready" role="status">{{ loading.bootstrap ? '正在准备工作区…' : '工作区未就绪，可关闭后重试。' }}</p>
       <template v-else>
-        <div v-if="state.mode === 'inbox' || state.mode === 'digest'" class="workspace-body" :class="{ 'has-reader': state.articleId, compact: state.width < 900 || viewport < 900 }">
+        <div v-if="state.mode === 'inbox' || state.mode === 'digest'" class="workspace-body" :class="{ 'has-reader': state.articleId, compact: Math.min(state.width, viewport - 16) < 900 }">
           <main class="master-pane">
             <WorkspaceFilters v-model="state.filters" :sources="sources" :topics="topics" :saved-filters="savedFilters"
               :digest="state.mode === 'digest'" :busy="Boolean(loading['filter-write'])" @apply="applyFilters"
@@ -123,9 +123,10 @@
             <dt>每日时点</dt><dd>{{ infrastructure.schedule?.collect_at }} 采集 / {{ infrastructure.schedule?.cutoff_at }} 截止 / {{ infrastructure.schedule?.digest_at }} 汇总（{{ infrastructure.schedule?.timezone }}）</dd>
           </dl>
           <p v-for="issue in infrastructure?.issues || []" :key="issue" class="reader-warning">{{ issue }}</p>
+          <ConnectorPanel v-if="workspace" :workspace-id="workspace.id" :can-import="workspace.can_import_legacy" :snapshot="operations" @imported="hub.refreshAfterImport" />
           <h3>公众号订阅</h3>
           <form class="subscription-form" @submit.prevent="subscribe(selectedSource)">
-            <label>选择本地已解析来源<select v-model="selectedSource"><option value="">请选择公众号</option><option v-for="source in sources" :key="source.id" :value="source.id">{{ source.name }}</option></select></label>
+            <label>选择本地已解析来源<select v-model="selectedSource"><option value="">请选择公众号</option><option v-for="source in subscriptionSources" :key="source.id" :value="source.id">{{ source.name }}</option></select></label>
             <a-button html-type="submit" size="small" :disabled="!selectedSource" :loading="loading['subscription-write']">订阅并排队</a-button>
           </form>
           <p class="field-help">仅显示本地已解析的前 100 个来源；没有找到时先在原公众号管理中解析。这里不接受猜测的来源 ID。</p>
@@ -146,19 +147,21 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { IntelligenceArticle, PreferenceProposal, PreferenceRule } from '@/api/intelligence'
 import WorkspaceFilters from './WorkspaceFilters.vue'
 import ArticleReader from './ArticleReader.vue'
+import ConnectorPanel from './ConnectorPanel.vue'
 import { clampWidth, focusAfterRemoval, type HubMode } from './workspaceState'
 import { useIntelligenceWorkspace } from './useIntelligenceWorkspace'
 let storage: Storage | undefined
 try { storage = window.localStorage } catch { /* Private mode can disable storage. */ }
 const hub = useIntelligenceWorkspace(undefined, storage)
-const { state, workspace, ready, loading, error, notice, articles, total, nextCursor, reader, topics, sources, savedFilters, digest, archives, proposals, rules, learning, feedback, infrastructure, subscriptions, share, digestItems, sourceName,
+const { state, workspace, ready, loading, error, notice, articles, total, nextCursor, reader, topics, sources, savedFilters, digest, archives, proposals, rules, learning, feedback, infrastructure, operations, subscriptions, share, digestItems, sourceName,
   open, setMode, loadMode, loadArticles, openArticle, sendFeedback, analyze, download, saveFilter, removeFilter, applyFilter, createDigest, createShareLink, revokeShare, propose, review, revokeRule, subscribe, toggleSubscription, backfill } = hub
 const launcher = ref<HTMLButtonElement | null>(null), panel = ref<HTMLElement | null>(null)
 const viewport = ref(window.innerWidth), selectedSource = ref(''), importConfirmed = ref(false), shareConfirm = ref(false)
+const subscriptionSources = computed(() => sources.value.filter(source => source.provider === 'we-mp-rss'))
 const modes: Array<{ value: HubMode; label: string }> = [{ value: 'inbox', label: '收件箱' }, { value: 'digest', label: '日期汇总' }, { value: 'learning', label: '偏好学习' }, { value: 'system', label: '运行状态' }]
 const score = (article: IntelligenceArticle) => Math.round((article.effective_relevance ?? article.ai_relevance ?? 0.5) * 100)
 const publishTime = (timestamp?: number) => timestamp ? new Date(timestamp * 1000).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '日期未知'
@@ -217,7 +220,7 @@ function startResize(event: PointerEvent) { if (event.button !== 0) return; resi
 function moveResize(event: PointerEvent) { if (resize) state.width = clampWidth(resize.width + resize.x - event.clientX, viewport.value) }
 function endResize() { resize = null }
 function resizeBy(delta: number) { state.width = clampWidth(state.width + delta, viewport.value) }
-function updateViewport() { viewport.value = window.innerWidth; state.width = clampWidth(state.width, viewport.value) }
+function updateViewport() { viewport.value = window.innerWidth }
 watch(() => workspace.value?.id, () => { selectedSource.value = ''; importConfirmed.value = false; shareConfirm.value = false })
 watch(ready, value => { if (value) updateViewport() })
 onMounted(() => window.addEventListener('resize', updateViewport))

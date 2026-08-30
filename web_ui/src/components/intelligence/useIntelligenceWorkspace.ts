@@ -1,6 +1,6 @@
 import { computed, onScopeDispose, reactive, ref, watch } from 'vue'
 import * as defaultApi from '@/api/intelligence'
-import type { DigestArchive, DigestDetail, FeedbackRecord, IntelligenceArticle, LearningStatus, PreferenceProposal, PreferenceRule, SavedFilter, SourceOption, TopicSummary, WorkspaceBootstrap } from '@/api/intelligence'
+import type { DigestArchive, DigestDetail, FeedbackRecord, IntelligenceArticle, LearningStatus, OperationsSnapshot, PreferenceProposal, PreferenceRule, SavedFilter, SourceOption, TopicSummary, WorkspaceBootstrap } from '@/api/intelligence'
 import { defaultFilters, initialState, preferenceKey, RequestFence, restoreState, serializeState, type HubMode } from './workspaceState'
 
 // A single owner for the floating surface. Responses may update only the scope
@@ -26,6 +26,7 @@ export function useIntelligenceWorkspace(api = defaultApi, storage?: Pick<Storag
   const learning = ref<LearningStatus | null>(null)
   const feedback = ref<{ total: number; items: FeedbackRecord[] }>({ total: 0, items: [] })
   const infrastructure = ref<Record<string, any> | null>(null)
+  const operations = ref<OperationsSnapshot | null>(null)
   const subscriptions = ref<Array<Record<string, any>>>([])
   const share = ref<{ id: string; url: string; expires_at: string } | null>(null)
   const fence = new RequestFence()
@@ -69,7 +70,7 @@ export function useIntelligenceWorkspace(api = defaultApi, storage?: Pick<Storag
     articles.value = []; digest.value = null; share.value = null
     topics.value = []; sources.value = []; savedFilters.value = []
     archives.value = []; proposals.value = []; rules.value = []; subscriptions.value = []
-    learning.value = null; infrastructure.value = null; feedback.value = { total: 0, items: [] }
+    learning.value = null; infrastructure.value = null; operations.value = null; feedback.value = { total: 0, items: [] }
     total.value = 0; nextCursor.value = ''; error.value = ''; notice.value = ''
     state.visible = true
     await run('bootstrap', api.bootstrapWorkspace, async value => {
@@ -103,6 +104,9 @@ export function useIntelligenceWorkspace(api = defaultApi, storage?: Pick<Storag
       nextCursor.value = page.next_cursor
     })
   }
+  async function refreshAfterImport() {
+    await Promise.all([loadCommon(), loadMode()])
+  }
   async function loadDigest() {
     const id = scope(), selected = state.selectedDate
     if (!id || !ready.value) return
@@ -135,6 +139,7 @@ export function useIntelligenceWorkspace(api = defaultApi, storage?: Pick<Storag
     if (!id || !ready.value) return
     await Promise.all([
       run('infrastructure', api.getIntelligenceInfrastructure, value => { infrastructure.value = value }),
+      run('operations', () => api.getIntelligenceOperations(id), value => { operations.value = value }),
       run('subscriptions', () => api.listIntelligenceSubscriptions(id), value => { subscriptions.value = value })
     ])
   }
@@ -273,6 +278,6 @@ export function useIntelligenceWorkspace(api = defaultApi, storage?: Pick<Storag
   })
   watch(() => state.visible, visible => { if (!visible) backfillRequests.clear() })
   onScopeDispose(() => { invalidate() })
-  return { state, workspace, ready, loading, error, notice, articles, total, nextCursor, reader, topics, sources, savedFilters, digest, archives, proposals, rules, learning, feedback, infrastructure, subscriptions, share, digestItems, sourceName,
-    open, close, closeReader, setMode, loadMode, loadArticles, loadDigest, selectDate, openArticle, sendFeedback, analyze, download, saveFilter, removeFilter, applyFilter, createDigest, createShareLink, revokeShare, propose, review, revokeRule, subscribe, toggleSubscription, backfill, importBatch }
+  return { state, workspace, ready, loading, error, notice, articles, total, nextCursor, reader, topics, sources, savedFilters, digest, archives, proposals, rules, learning, feedback, infrastructure, operations, subscriptions, share, digestItems, sourceName,
+    open, close, closeReader, setMode, loadMode, refreshAfterImport, loadArticles, loadDigest, selectDate, openArticle, sendFeedback, analyze, download, saveFilter, removeFilter, applyFilter, createDigest, createShareLink, revokeShare, propose, review, revokeRule, subscribe, toggleSubscription, backfill, importBatch }
 }

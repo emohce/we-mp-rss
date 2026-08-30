@@ -190,9 +190,41 @@ Documentation level: `controlled`
   Existing upstream eval/large-chunk/dynamic-import warnings remain. Served asset synchronization is in WU-16.
   UI preference lookup returned `not-activated` because this project has no design-preference-gate marker;
   no UI Skill/CLI, mother-board edit, browser or runtime service was invoked. Existing Arco/source rules apply.
-- WU-16: implementing; historical integration research is not connector runtime or external canary acceptance.
+- WU-16: 91 backend tests pass through the pre-import offline runner with zero blocked I/O attempts and zero
+  legacy runtime module imports. RSS/Atom/JSON Feed, OPML redaction, public-content confirmation, scoped identities,
+  idempotency/atomic unit budgets, analysis fanout, CLI allowlist/strict JSON envelope, operations scope and
+  no-transport/expired-lease outbox contracts are covered. SupSub stays researched; Wechat2RSS stays disabled.
+  The legacy repair/force-refresh exclusion is tested by compiling only those exact source functions, not by
+  importing the side-effectful package. Missing dates never become today's articles; imported HTML is sanitized.
+  All 10 UI state tests, scoped TS/SFC script checks, SFC template compilation and Vite build pass. Two final
+  regressions cover stale cross-workspace operations and source/status refresh after file import. Additive static
+  sync verifies 129 byte-identical build files and 15 local index references; old hashed assets are retained.
+  Public SupSub price/CLI and Wechat2RSS docs were refreshed; no supplier account, actual field mapping or paid
+  API acceptance is claimed. Fresh public facts are dated in the two research owners.
 - Automatic global router reports an oversized response owner and registry/loading-graph drift. The user permits
   bypassing only that automatic check for this implementation turn; no global rule was changed.
 - Verification route: scoped docs plus isolated intelligence package contracts and affected frontend checks.
-  Real databases, online migration, provider accounts/spend, runtime services, deployment and push remain unrun.
-- Sidecar: main thread; no delegates. Memory route: project current/AI-DB documentation, no global memory write.
+  User SQL databases, online migration, provider accounts/spend, MQTT, deployment and push remain unrun.
+  Do not claim zero infrastructure connections for the whole turn: the earlier Redis import incident is below.
+- Sidecar: main thread; no delegates. Memory route: project current/AI-DB and project error memory only; no global
+  memory write. The broken automatic global router alone is waived by this turn's D1 authorization.
+- Documentation closeout: 32 exact document members, 38 code dependencies and 13 validators; 230 local document
+  links resolve, code-link audit and scoped whitespace checks pass. Current architecture, integration research,
+  Controlled owners, technical/status routes, AI-DB and the project error record are synchronized.
+- Staged generated-JS exception: the unchanged upstream translation library emits two trailing spaces inside
+  template strings in the new index chunk. Source/document/other-asset whitespace checks pass; that exact generated
+  chunk is verified against build bytes instead of altering its content/hash. No user code or vendor text is trimmed.
+
+### V3 test isolation incident
+
+- Verified event: importing `jobs.fetch_no_article` executed `jobs.__init__` and legacy runtime dependencies.
+  Redis client and queue clients connected; the two module-level queue threads start with status persistence.
+- The process finished and no matching test process remained. Source queues start empty, so no startup task
+  consumption was found; actual Redis status changes are unverified. No Redis inspection, deletion, rollback or
+  service restart was attempted. This incident is not an authorized infrastructure acceptance test.
+- Recovery: compile only the selected legacy function ASTs for their local contracts; install the socket,
+  subprocess and user-SQLite deny guard before discovery. Disable urllib3's optional IPv6 bind probe, not the guard.
+  The clean rerun passes 91 tests with zero I/O attempts and zero legacy runtime imports. This does not prove
+  the previous Redis connection had no effect.
+- Durable project record: [legacy job import side effects](../../knowledge/error-memory/legacy-job-import-runtime-side-effects.md).
+  Follow-up requires an exact read-only Redis scope; any later recovery still needs separate confirmation.

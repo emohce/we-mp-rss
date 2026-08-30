@@ -1,0 +1,1 @@
+import{v as e}from"./http-zeLOXDYB.js";export{e as getArticles};

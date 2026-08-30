@@ -28,6 +28,8 @@ function fixture(overrides = {}, storage) {
     listIntelligenceTopics: async () => [], listAvailableSources: async () => [], listSavedFilters: async () => [],
     listIntelligenceArticles: async () => ({ items: [], next_cursor: '', total: 0 }),
     listDigests: async () => [], getDigest: async (_, date) => ({ date, items: [] }),
+    getIntelligenceInfrastructure: async () => ({}), getIntelligenceOperations: async () => ({ recent_digests: [] }),
+    listIntelligenceSubscriptions: async () => [],
     ...overrides
   }
   return { hub: effects.run(() => useIntelligenceWorkspace(api, storage)), stop: () => effects.stop() }
@@ -104,4 +106,23 @@ test('a share response for a previous date cannot leak into the new date view', 
   await hub.open(); const sharing = hub.createShareLink(); await hub.selectDate('2026-08-29')
   pending.resolve({ id: 'old', url: 'https://example.test/private' }); await sharing
   assert.equal(hub.share.value, null); assert.equal(hub.digest.value.date, '2026-08-29'); stop()
+})
+test('operations from a previous workspace cannot replace the newly opened account', async () => {
+  const old = deferred(); let user = 'a'
+  const { hub, stop } = fixture({ bootstrapWorkspace: async () => ({ id: 'workspace-' + user, user_id: user }),
+    getIntelligenceOperations: id => id === 'workspace-a' ? old.promise : Promise.resolve({ marker: 'b', recent_digests: [] }) })
+  await hub.open(); const loadingOld = hub.setMode('system'); await nextTick()
+  hub.close(); user = 'b'; await hub.open(); await hub.setMode('system')
+  old.resolve({ marker: 'private-a', recent_digests: [] }); await loadingOld
+  assert.equal(hub.operations.value.marker, 'b'); stop()
+})
+test('file import refreshes source choices and local operations without importing again', async () => {
+  let imported = false, operationReads = 0, writes = 0
+  const { hub, stop } = fixture({ listAvailableSources: async () => imported ? [{ id: 'imported', name: 'reading-ai', provider: 'local-feed' }] : [],
+    getIntelligenceOperations: async () => ({ read: ++operationReads, recent_digests: [] }),
+    importConnectorFile: async () => { writes++ } })
+  await hub.open(); await hub.setMode('system'); const before = operationReads
+  imported = true; await hub.refreshAfterImport()
+  assert.equal(hub.sources.value[0].name, 'reading-ai'); assert(operationReads > before)
+  assert.equal(writes, 0); stop()
 })

@@ -53,7 +53,10 @@ change other worktrees or absorb the two pre-existing verify/changes hunks. Runt
 | digest run/revision | scheduled workflow -> digest -> share/outbox; list ranking shared | Coverage cutoff/late/idempotency and tenant tests | Email/webhook/MQTT network excluded |
 | preference/search/download | feedback -> list/digest; detail -> local content/export | Shared ranking, local FTS contract and HTML-to-Markdown tests | Paid AI, historical data migration excluded |
 | floating workspace | layout -> drawer -> API -> reader | UI state tests, affected semantic typecheck and production bundle | No backend/dev server launch; user-feel acceptance separate |
-| connectors/status | registry -> normalized page -> collection and health API | Vendor-shaped fixtures, capability/endpoint/provenance/error tests | No account, authentication, payment or publish |
+| connectors/status | registry -> local file -> identity/usage -> analysis/daily; operations projection | Format/CLI-envelope fixtures, scope/idempotency/budget tests | No vendor account, real content mapping, authentication or payment |
+| offline import legacy consumers | connector article -> v1 force refresh / legacy repair selection | Exact source-function AST contract with socket/process/DB guard | Full legacy module startup excluded; import incident tracked in verify |
+| no-transport outbox | publisher -> dispatcher claim -> lease acknowledgement/retry | Pending retention, expired lease CAS and attempt exhaustion | No broker/delivery acceptance; historical records not rewritten |
+| served build artifacts | Vite dist -> additive static copy -> local index references | Byte equality for 129 generated files and 15 local references | No server/browser/deploy; old cached assets retained |
 
 - Strategy: `main-only`, work budget `U`, child count `0`; coupled contracts and current Full Access keep writes
   in Root. Each batch stays independently reviewable; split a batch further only for an atomicity/size boundary.
@@ -64,6 +67,13 @@ change other worktrees or absorb the two pre-existing verify/changes hunks. Runt
 - Documentation impact: `requirement-canonical + project-current`, Root owns updates and stale-claim sweep.
 - Full repository suite escalation: none. The intelligence package suite is in scope because all its persistence,
   worker, service and API consumers are affected; unrelated upstream suites are not selected.
+- Execution closeout: WU-10..16 local code/offline scope complete; six prior batch commits plus this final batch.
+  D7 uses the pre-import offline guard after a legacy import connected to Redis. Earlier Redis status impact is
+  unverified and requires separate read-only authority; no cleanup or runtime startup is authorized here.
+- D7 batching decision: the registered file-import/operations contract, its API/UI and served bundle must land
+  together, including truthful outbox status and legacy no-fetch guards. Generated chunk references and direct
+  evidence/incident owners exceed the ordinary size guideline but contain no independent feature or new SQL
+  migration. Keep this one coupled seventh batch; preserve unrelated historical document hunks separately.
 
 ### Historical v2 plan
 

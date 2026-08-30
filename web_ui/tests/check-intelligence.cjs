@@ -9,7 +9,7 @@ const options = { noEmit: true, strict: true, skipLibCheck: true, target: ts.Scr
 // SFC script blocks are type-checked via virtual files; templates are parsed and
 // compiled, NOT advertised as vue-tsc semantic or browser acceptance.
 const virtual = new Map()
-for (const name of ['IntelligenceHub.vue', 'WorkspaceFilters.vue', 'ArticleReader.vue']) {
+for (const name of ['IntelligenceHub.vue', 'WorkspaceFilters.vue', 'ArticleReader.vue', 'ConnectorPanel.vue']) {
   const filename = path.join(componentRoot, name), source = fs.readFileSync(filename, 'utf8')
   const { descriptor, errors } = parse(source, { filename })
   if (errors.length) throw new Error(errors.join('\n'))

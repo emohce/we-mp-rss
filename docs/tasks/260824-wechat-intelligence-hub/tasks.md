@@ -9,7 +9,8 @@ Documentation level: `controlled`
 
 ## Task State
 
-`v3-implementing`; WU-0..9 retain their historical local/static acceptance only.
+`v3-local-verified / runtime-gated / unpushed`; WU-0..9 retain historical local/static acceptance only.
+WU-10..16 acceptance is code/offline scope, not service or user-experience acceptance; the Redis incident impact remains open.
 
 ## Work Unit Ledger
 
@@ -22,7 +23,7 @@ Documentation level: `controlled`
 | WU-4 Floating UI | 1 | 1 | main | app-root | accepted | Vite production build and asset-reference checks pass | browser acceptance excluded | retain global drawer; no route added |
 | WU-5 Migration/closeout | 1 | 1 | main | app-root | accepted | offline DDL, Compose parse, docs and split local commits verified | live acceptance excluded | hand off explicit runtime gates |
 | WU-6 Connector revision | 1 | 1 | main | app-root | accepted | SupSub primary sources, generic registry and verification template reconciled | none | retain `researched` state |
-| WU-7 SupSub adapter/canary | 1 | 0 | future | app-root | deferred-by-scope | no install/login/account fixture | explicit implementation and external-action gate | start with Feed/CLI read-only fixture |
+| WU-7 SupSub adapter/canary | 1 | 0 | future | app-root | deferred-by-scope | D7 generic format/CLI-envelope fixtures exist; no install/login/vendor fixture | explicit external-action gate | obtain authorized supplier fixture/read-only canary |
 | WU-8 Legacy documentation migration | 1 | 1 | main | app-root | accepted | donor/current source matrix, index, link and statement checks pass | runtime gaps remain explicit | keep core docs canonical |
 | WU-9 CodeNote + AI-DB initialization | 1 | 1 | main | app-root | accepted | project audit OK; resolver 2/2; catalog tests 14/14; AI-DB 15/15 populated | live DB/runtime excluded | keep staging inspection and mutation gates explicit |
 | WU-10 Correctness plan | 1 | 1 | main | app-root | accepted | RAW-006, exact manifest, code-link/diff checks | none | local commit then WU-11 |
@@ -31,7 +32,7 @@ Documentation level: `controlled`
 | WU-13 Digest reconciliation | 1 | 1 | main | app-root | accepted | 60 focused tests; frozen cohort, partial/late revisions, stable/revocable share | live delivery excluded | local digest batch |
 | WU-14 Unified preference/content | 1 | 1 | main | app-root | accepted | 71 focused tests; shared ranking, corrections/rules/filters, FTS and content/export | live S3/PG query plans excluded | local coupled API/query/content batch |
 | WU-15 Floating workspace | 1 | 1 | main | app-root | accepted | 73 backend + 8 UI state tests; scoped TS/SFC scripts and production build | browser/runtime excluded; served assets sync in WU-16 | one state owner, inline reader and explicit import |
-| WU-16 Connectors/operations | 1 | 1 | main | app-root | implementing | schema and API boundaries ready | live providers excluded | offline contracts/status API and final generated assets |
+| WU-16 Connectors/operations | 1 | 1 | main | app-root | accepted-local | 91 guarded backend + 10 UI tests; types/build; 129 files/15 references | runtime/canary/browser excluded; prior Redis impact unverified | final local batch, then separate runtime gates |
 
 ## Execution Journal
 
@@ -54,12 +55,16 @@ Documentation level: `controlled`
 | E-015 | 2026-08-25 | WU-9 | app-root | implemented | absent -> local initialization | old adapter's no-AI-DB constraint rejected; current code/docs used to populate DB memory | run project/catalog/link/secret/static boundary audits |
 | E-016 | 2026-08-25 | WU-9 | app-root | accepted | verification -> accepted | CodeNote project audit, exact resolver routes, catalog tests, populated workspace, JSON/link/diff/secret boundaries; no DB/runtime action | keep reviewable; commit only on a new explicit current-message request |
 | E-017 | 2026-08-25 | WU-9 | app-root | accepted | verified-uncommitted -> committed | user renewed commit authorization; three local batches created, then history rebuilt to drop a host absolute path from `vibe/specs/PROJECT_STATUS.md` | keep `44198c3`/`0947b3c`/`f2987dd` local; safety refs retained; no push |
+| E-018 | 2026-08-30 | WU-10..15 | app-root | accepted-local | RAW-006 -> six scoped batches | `71367de`, `26b983c`, `201869f`, `4a10003`, `b8932bf`, `9543624`; focused evidence below | preserve both pre-existing dirty hunks; no push |
+| E-019 | 2026-08-30 | WU-16 | app-root | isolation incident | direct legacy function import -> Redis-connected queue startup | source chain confirmed; test process exited; possible status writes not inspected | disclose; deny further infrastructure I/O; no cleanup |
+| E-020 | 2026-08-30 | WU-16 | app-root | accepted-local | isolated source contract -> guarded offline suite | 91 tests, zero denied I/O attempts, no legacy runtime imports; 10 UI tests/build and artifact equality | local final batch only; Redis impact remains separate gate |
 
 ## Checklist
 
-- [ ] Complete WU-10..16 with focused evidence and coherent local commits.
-- [ ] Preserve pre-existing verify/changes hunks and keep all external-action gates closed.
-- [ ] Synchronize current documentation without promoting static evidence to live acceptance.
+- [x] Complete WU-10..16 code/offline scope; six preceding local commits and this final D7 batch.
+- [x] Preserve pre-existing verify/changes hunks; retain intended external-action gates and disclose the Redis isolation breach.
+- [x] Synchronize current documentation without promoting static evidence to live acceptance.
+- [ ] Independently inspect possible Redis status effects only after a new, exact read-only authorization.
 
 - [x] Inspect current implementation and rules.
 - [x] Apply scoped backend changes.

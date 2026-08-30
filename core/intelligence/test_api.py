@@ -269,6 +269,9 @@ class IntelligenceApiContractTest(unittest.TestCase):
         invalid = self.client.post("/api/v2/intelligence/subscriptions", params=params,
                                    json={"source_id": "unresolved", "provider": "we-mp-rss"})
         self.assertEqual(invalid.status_code, 400)
+        paid = self.client.post("/api/v2/intelligence/subscriptions", params=params,
+                                json={"source_id": "resolved", "provider": "paid-api"})
+        self.assertEqual(paid.status_code, 400)
         with self.session_factory() as session:
             self.assertEqual(session.scalar(select(func.count()).select_from(WorkspaceSubscription)), 0)
         created = self.client.post("/api/v2/intelligence/subscriptions", params=params,
@@ -282,6 +285,84 @@ class IntelligenceApiContractTest(unittest.TestCase):
         paused = self.client.patch(endpoint, params=params, json={"status": "paused"}).json()["data"]
         self.assertEqual(paused["inflight_policy"], "existing_daily_cohort_is_preserved")
         self.assertEqual(self.client.post(endpoint + "/backfill", params=params, json={"request_id": "another-fixture"}).status_code, 404)
+
+    def test_connector_preview_is_read_only_and_import_requires_admin_public_confirmation(self):
+        from .test_connectors import json_feed
+        params = {"workspace_id": self.workspace_id}
+        preview = self.client.post("/api/v2/intelligence/connectors/preview", params=params,
+                                   json={"provider": "local-feed", "content": json_feed()})
+        self.assertEqual(preview.status_code, 200)
+        self.assertEqual(preview.json()["data"]["count"], 1)
+        with self.session_factory() as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(Article)), 0)
+        payload = {"provider": "local-feed", "source_key": "reading-ai", "request_id": "import-fixture",
+                   "content": json_feed(), "confirm_public_content": True}
+        self.assertEqual(self.client.post("/api/v2/intelligence/connectors/import", params=params, json=payload).status_code, 404)
+        self.app.dependency_overrides[get_current_user_or_ak] = lambda: {
+            "user_id": "user-a", "username": "alice", "role": "admin", "auth_type": "test",
+        }
+        self.assertEqual(self.client.post("/api/v2/intelligence/connectors/import", params=params,
+                                          json={**payload, "confirm_public_content": False}).status_code, 422)
+        imported = self.client.post("/api/v2/intelligence/connectors/import", params=params, json=payload)
+        self.assertEqual(imported.status_code, 200)
+        self.assertEqual(imported.json()["data"]["network_requests"], 0)
+        self.assertEqual(imported.json()["data"]["imported"], 1)
+        again = self.client.post("/api/v2/intelligence/connectors/import", params=params, json=payload)
+        self.assertEqual(again.json()["data"]["status"], "already_completed")
+        sources = self.client.get("/api/v2/intelligence/sources/available", params=params).json()["data"]
+        self.assertEqual(sources[0]["name"], "reading-ai")
+        self.assertEqual(sources[0]["provider"], "local-feed")
+
+    def test_operation_status_exposes_configuration_not_probed_runtime(self):
+        params = {"workspace_id": self.workspace_id}
+        response = self.client.get("/api/v2/intelligence/operations", params=params)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertFalse(data["runtime_verified"])
+        self.assertEqual(data["connection_status"], "not_probed")
+        self.assertEqual(data["delivery_mode"], "local-retained-no-transport")
+        self.assertTrue(all(not item["automatic_fallback"] for item in data["connectors"]))
+        foreign = self.client.get("/api/v2/intelligence/operations", params={"workspace_id": "not-mine"})
+        self.assertEqual(foreign.status_code, 404)
+
+    def test_offline_import_is_excluded_from_legacy_repair_and_forced_fetch(self):
+        import ast
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        from core.models.base import DATA_STATUS
+
+        # Importing jobs executes its legacy package initializer, which starts
+        # Redis-backed queues. Test the exact source functions, not that runtime.
+        denied_fetch = Mock(side_effect=AssertionError("no hidden provider calls"))
+        namespace = {"Article": Article, "DATA_STATUS": DATA_STATUS,
+                     "cfg": SimpleNamespace(get=lambda key, default=None: default),
+                     "fetch_article_content": denied_fetch}
+        for relative, name in (("core/article_content.py", "sync_article_content"),
+                               ("jobs/fetch_no_article.py", "claim_next_article")):
+            source = Path(__file__).parents[2] / relative
+            tree = ast.parse(source.read_text())
+            function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == name)
+            self.assertEqual(function.decorator_list, [])
+            exec(compile(ast.Module(body=[function], type_ignores=[]), str(source), "exec"), namespace)
+        sync_article_content = namespace["sync_article_content"]
+        claim_next_article = namespace["claim_next_article"]
+        self.seed_article("connector:offline")
+        with self.session_factory() as session:
+            article = session.get(Article, "connector:offline")
+            article.content = article.content_html = ""
+            article.has_content = 0
+            session.commit()
+            self.assertIsNone(claim_next_article(session))
+            self.assertEqual(sync_article_content(session, article, force=True), (False, "offline_connector"))
+            article.content = "<p>cached public content</p>"
+            self.assertEqual(sync_article_content(session, article, force=True), (True, "cached"))
+            denied_fetch.assert_not_called()
+        self.seed_article("normal-repair")
+        with self.session_factory() as session:
+            article = session.get(Article, "normal-repair")
+            article.has_content = 0
+            session.commit()
+            self.assertEqual(claim_next_article(session).id, "normal-repair")
 
 
 if __name__ == "__main__":

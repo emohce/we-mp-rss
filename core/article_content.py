@@ -181,6 +181,10 @@ def sync_article_content(
     force: bool = False,
 ) -> Tuple[bool, str]:
     existing_content = (getattr(article, "content", "") or "").strip()
+    # Reserved namespace for manually imported file records. Neither the v1
+    # force-refresh path nor the legacy repair job may turn these into crawls.
+    if str(getattr(article, "id", "")).startswith("connector:"):
+        return bool(existing_content), "cached" if existing_content else "offline_connector"
     if is_usable_article_content(existing_content) and not force:
         if getattr(article, "has_content", 0) == 0:
             print_info(f"article {article.id} already has content, skipping fetch")

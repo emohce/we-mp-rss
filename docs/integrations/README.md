@@ -56,7 +56,9 @@
 
 ## 需要持久化的通用对象
 
-后续实现采用以下逻辑对象；具体表结构需在实现批次单独迁移：
+v3 已有 `int_connector_identities` 和 `int_connector_usage`，用于公开 Feed 文件的工作区身份、幂等
+操作与单位预算；并复用文章关联、分析任务和 outbox。用量不是货币余额，未绑定付费供应商。
+以下完整安装/远端同步对象仍属后续设计，不能由现有两个表推断为全部实现：
 
 1. `connector_installations`：工作区、供应商、状态、凭据引用、能力快照和版本；
 2. `external_source_identities`：供应商来源 ID、类型、规范来源 ID 和证据；
@@ -72,10 +74,19 @@
 | Provider | Role | State | 当前采用结论 |
 | --- | --- | --- | --- |
 | `we-mp-rss` | 核心公众号采集与 RSS | `adapter-ready` | 唯一产品核心；真实调用默认关闭 |
+| 本地 Feed 文件 | 手动公开内容导入 | `adapter-ready` | RSS/Atom/JSON Feed 离线契约；管理员确认、1 MiB/100 篇；OPML 只预览 |
 | 微信官方 API | 授权账号内容 | `researched` | 部署时按账号权限复核 |
 | 通用付费 JSON API | 补采 | `adapter-ready` | 仅 HTTPS 允许域名和预算封顶 |
-| SupSub | 托管聚合、发现、订阅同步、AI 增强 | `researched` | 先做 Feed/OPML/CLI 只读路径，不绑定运行时 |
+| SupSub | 托管聚合、发现、订阅同步、AI 增强 | `researched` | 通用 Feed/CLI 信封离线测试已通过；无账号样例、实际字段/运行时验收 |
 | `Wechat2RSS` | 行为与限频参考 | `disabled` | 不作为运行时依赖，不复用受限服务 |
+
+2026-08-30 核验：API 注册表分别返回 `supplier_state`、`offline_contract` 与 `runtime_policy`，不能
+把“格式测试通过”显示成“供应商连接成功”。运行状态只读本地 DB，不探测基础设施；所有供应商均
+禁止自动失败切换。固定 CLI 参数计划不是可执行安装或授权。Wechat2RSS 的部分 GET 端点会修改
+订阅/触发采集，不能采用“所有 GET 都只读”的判断。
+
+文件导入原子登记用量、身份和分析任务，重复请求不覆盖规范内容或反馈；未知/预留用量不自动重试。
+由于保留旧 v1 全局文章池，当前必须由管理员确认内容公开；私密 Feed 和全应用多租户验收不在本批。
 
 SupSub 的证据与分阶段采用决定见
 [SupSub 服务与连接器核验](../research/supsub-integration.md)。后续供应商使用

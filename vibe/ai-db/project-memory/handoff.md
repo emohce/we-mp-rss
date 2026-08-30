@@ -1,12 +1,15 @@
 # Database Handoff
 
-Updated: 2026-08-25
+Updated: 2026-08-30
 
 ## Current State
 
 - Stable code/document memory is initialized.
 - No live database route, schema snapshot, row-count baseline, backup receipt, migration history or execution-ID recovery contract is accepted.
 - No database connection or mutation was performed during initialization.
+- V3 code/offline handoff is populated; final isolated package suite passes 91 tests. This is not a schema
+  application receipt. Separately, an earlier legacy test import connected to Redis and may have written queue
+  status; actual effect is unverified, with no recovery performed. See the [incident](../../../docs/tasks/260824-wechat-intelligence-hub/verify.md#v3-test-isolation-incident).
 
 ## Open Gates
 

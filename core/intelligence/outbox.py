@@ -98,6 +98,12 @@ class OutboxRepository:
         now: datetime | None = None,
     ) -> ClaimedOutboxEvent | None:
         now = now or utcnow()
+        with self.session_factory() as session:
+            session.execute(update(OutboxEvent).where(
+                OutboxEvent.state == "publishing", OutboxEvent.lease_expires_at <= now,
+                OutboxEvent.attempts >= OutboxEvent.max_attempts,
+            ).values(state="failed", lease_token="", lease_expires_at=None, last_error="lease_expired"))
+            session.commit()
         for _ in range(3):
             with self.session_factory() as session:
                 event_id = session.scalar(
@@ -167,6 +173,7 @@ class OutboxRepository:
                     OutboxEvent.id == event_id,
                     OutboxEvent.state == "publishing",
                     OutboxEvent.lease_token == lease_token,
+                    OutboxEvent.lease_expires_at > utcnow(),
                 )
                 .values(
                     state="delivered",
@@ -186,22 +193,21 @@ class OutboxRepository:
                     OutboxEvent.id == event_id,
                     OutboxEvent.state == "publishing",
                     OutboxEvent.lease_token == lease_token,
+                    OutboxEvent.lease_expires_at > utcnow(),
                 )
             )
             if event is None:
                 return False
-            if event.attempts >= event.max_attempts:
-                event.state = "failed"
-            else:
-                delays = (5, 15, 30, 60, 120, 300, 600, 1800)
-                delay = delays[min(max(event.attempts - 1, 0), len(delays) - 1)]
-                event.state = "pending"
-                event.available_at = utcnow() + timedelta(seconds=delay)
-            event.lease_token = ""
-            event.lease_expires_at = None
-            event.last_error = error[:500]
+            delays = (5, 15, 30, 60, 120, 300, 600, 1800)
+            delay = delays[min(max(event.attempts - 1, 0), len(delays) - 1)]
+            result = session.execute(update(OutboxEvent).where(
+                OutboxEvent.id == event_id, OutboxEvent.state == "publishing",
+                OutboxEvent.lease_token == lease_token, OutboxEvent.lease_expires_at > utcnow(),
+            ).values(state="failed" if event.attempts >= event.max_attempts else "pending",
+                     available_at=utcnow() + timedelta(seconds=delay), lease_token="", lease_expires_at=None,
+                     last_error=error[:500]))
             session.commit()
-            return True
+            return result.rowcount == 1
 
 
 class OutboxDispatcher:
@@ -210,6 +216,9 @@ class OutboxDispatcher:
         self.publisher = publisher
 
     def dispatch_once(self) -> bool:
+        if getattr(self.publisher, "transport_enabled", True) is False:
+            # Lite/Standard retain local events; no fake 'delivered' receipt.
+            return False
         claimed = self.repository.claim_next()
         if claimed is None:
             return False

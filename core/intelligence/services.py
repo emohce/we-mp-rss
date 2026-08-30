@@ -494,6 +494,8 @@ class SubscriptionService:
         provider: str = "we-mp-rss",
     ) -> tuple[WorkspaceSubscription, CollectionJob | None]:
         TenantService.require_membership(session, workspace_id, user_id)
+        if provider != "we-mp-rss":
+            raise ValueError("provider runtime subscription is disabled pending capability and account acceptance")
         session.execute(update(Workspace).where(Workspace.id == workspace_id).values(updated_at=Workspace.updated_at))
         if provider == "we-mp-rss":
             feed = session.get(Feed, source_id)

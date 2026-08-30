@@ -48,7 +48,16 @@ Documentation level: `controlled`
     "vibe/knowledge/technical-details.md",
     "vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/plan.md",
     "vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/sql.md",
-    "vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/verify.md"
+    "vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/verify.md",
+    "docs/README.md",
+    "docs/integrations/README.md",
+    "docs/research/supsub-integration.md",
+    "docs/research/wechat-collection-landscape.md",
+    "docs/knowledge/error-memory/README.md",
+    "docs/knowledge/error-memory/legacy-job-import-runtime-side-effects.md",
+    "vibe/knowledge/error-memory/README.md",
+    "vibe/ai-db/project-memory/README.md",
+    "vibe/ai-db/project-memory/delivery_log.md"
   ],
   "dependencies": [
     "core/db.py",
@@ -79,7 +88,16 @@ Documentation level: `controlled`
     "core/intelligence/preferences.py",
     "core/intelligence/search.py",
     "core/intelligence/content.py",
-    "core/intelligence/exporting.py"
+    "core/intelligence/exporting.py",
+    "core/intelligence/connectors.py",
+    "core/intelligence/operations.py",
+    "core/intelligence/events.py",
+    "core/intelligence/outbox.py",
+    "core/article_content.py",
+    "jobs/fetch_no_article.py",
+    "web_ui/src/components/intelligence/ConnectorPanel.vue",
+    "web_ui/index.html",
+    "static/index.html"
   ],
   "validators": [
     "core/intelligence/test_migration.py",
@@ -91,7 +109,10 @@ Documentation level: `controlled`
     "core/intelligence/test_api.py",
     "core/intelligence/test_preferences_content.py",
     "web_ui/tests/intelligence-state.test.cjs",
-    "web_ui/tests/check-intelligence.cjs"
+    "web_ui/tests/check-intelligence.cjs",
+    "core/intelligence/test_connectors.py",
+    "tools/test_intelligence_offline.py",
+    "tools/sync_intelligence_ui.cjs"
   ],
   "git_scope_prefixes": [
     "AGENTS.md",
@@ -102,7 +123,8 @@ Documentation level: `controlled`
     "docs/tasks/260824-wechat-intelligence-hub",
     "docs/migrations",
     "docs/integrations",
-    "docs/research"
+    "docs/research",
+    "docs/knowledge/error-memory"
   ]
 }
 ```
@@ -154,6 +176,8 @@ Documentation level: `controlled`
 - 浮窗使用单一可恢复视图状态，阅读与列表并排，过滤和宽度可保存；打开浮窗不自动导入全库。
 - 连接器运行时只接受已注册且能力匹配的只读操作；Wechat2RSS、SupSub、充值 API 先通过离线
   fixture 验证，展示来源、任务/冷却/日报覆盖状态；不得把 fixture 通过写成真实供应商已接通。
+- 手动文件导入仅限管理员确认的公开内容；现有 v1 全局文章池未完成租户化，不能导入私密 Feed。
+  OPML/Wechat2RSS 只预览，不订阅或导入；导入不补抓 URL，不自动切换供应商或消耗收费额度。
 
 以下 v2 条目为已交付基础，不代替以上新增回归验收。
 
@@ -284,7 +308,7 @@ delta:
     confirmation: explicit
     canonical_location: vibe/ai-db/README.md
 memory_used: [wechat-collection-research-and-supsub-baseline]
-memory_updates: [project-error-memory:sqlite-memory-pool-routing, codenote-error-memory:python-unittest-absolute-file-path-module-resolution, codenote-error-memory:zsh-scalar-file-list-not-word-split]
+memory_updates: [project-error-memory:sqlite-memory-pool-routing, codenote-error-memory:python-unittest-absolute-file-path-module-resolution, codenote-error-memory:zsh-scalar-file-list-not-word-split, project-error-memory:legacy-job-import-runtime-side-effects]
 open_questions: []
 ```
 

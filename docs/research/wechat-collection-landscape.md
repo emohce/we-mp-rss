@@ -2,14 +2,15 @@
 
 Last verified: 2026-08-24
 Legacy document sync verified: 2026-08-25
+Targeted refresh: 2026-08-30（Wechat2RSS/SupSub 公开文档与本地 v3 契约；其他供应商价格未复核）
 
 ## 结论与证据等级
 
 - **源码确认**：`we-mp-rss` 使用已登录公众号后台的 token、cookie、`faker_id`，请求
   `appmsgpublish`/`appmsg` 类列表接口并按 `begin/count` 翻页；`200013` 和 `200003` 已在上游
   代码中作为不同错误处理。参见
-  [`core/wx/model/app.py`](../../core/wx/model/app.py) 与
-  [`core/wx/model/free_publish.py`](../../core/wx/model/free_publish.py)。
+  [`core/wx/model/app.py`](../../core/wx/model/app.py#L27-L83) 与
+  [`core/wx/model/free_publish.py`](../../core/wx/model/free_publish.py#L119-L162)。
 - **项目文档确认**：`Wechat2RSS` 当前说明每个公众号每天检查 1–2 次、延迟 0–24 小时，程序只抓
   最新 20 篇；触发风控后从 15 分钟开始倍增，最大 6 小时。这里是其软件行为，不是微信公布的
   通用额度。
@@ -49,7 +50,8 @@ Legacy document sync verified: 2026-08-25
 - 本次核验未发现面向任意公众号历史采集的官方稳定数值额度，不能把经验值写成官方指标。
 - 不通过代理池、验证码绕过、Cookie 隐匿或限频后轮换账户规避限制。
 - 默认每账户每提供方一个活动请求；`Retry-After` 优先，否则使用 15、30、60、120、240、360 分钟退避。
-- 新订阅只发现一页；历史补采由用户指定范围并持久化游标。
+- 新订阅只排队、不在请求中采集；每次 Worker 仅请求一页，head 任务默认最多 3 页且保持窗口覆盖
+  状态。历史补采显式发起、使用独立检查点，不能拿昨日 backfill 游标作今日首页。
 - 只有页面结果成功落库后推进游标；认证失败禁用账户并持久记录错误，通知属于后续可选投递能力。
 - 共享同一后台凭据的工作区共用一个总预算和来源任务；落库后再做工作区扇出，不能通过创建用户
   或账户别名重复消耗上游接口。
@@ -90,3 +92,16 @@ Legacy document sync verified: 2026-08-25
 - `wewe-rss` 可作为 MIT 参考，但项目归档且远程中继不进入运行时依赖。
 - SupSub CLI 为 MIT，但托管服务、用户内容和账号数据仍受其服务与隐私条款约束；复用 CLI 许可证
   不等于获得托管数据的再分发许可。
+
+## 2026-08-30 连接器复核
+
+- [Wechat2RSS 部署页](https://wechat2rss.xlab.app/deploy/)显示 ¥15/月或 ¥150/年，是自部署软件授权，
+  不是充值历史文章 API。[QA](https://wechat2rss.xlab.app/deploy/qa)说明仅取最新 20 篇，抓取、
+  已存数据与 Feed 输出是不同窗口；每天 1–2 次与 0–24 小时仍只是项目说明，不是本项目实测 SLA。
+- [API 文档](https://wechat2rss.xlab.app/deploy/api)的 `/add/:id` 即使来源已存在也会排队更新；
+  `/del`、`/pause`、`/login/refresh` 同样可能通过 GET 改变状态。`/api/query` 是已存历史查询，
+  不是补采任意历史的证明。含授权查询串的 Feed URL 不可进入日志或公开页面。
+- [部署协议](https://wechat2rss.xlab.app/deploy/agreement)限制商业用途、公开服务和授权分发；当前
+  只保留文档参照与 Feed 格式预览，不启用导入或运行绑定。公开仓库结构不是完整采集器开源证明。
+- SupSub 公开价格仍为基础版 ¥29/月、¥299/年、200 来源/10 关注点；完整边界和未验收项由
+  [专项核验](supsub-integration.md)持有。通用充值 API 仍未绑定供应商；无收费/登录/真实采集调用。

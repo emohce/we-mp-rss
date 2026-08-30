@@ -120,6 +120,14 @@ Updated: 2026-08-25
 | [preference/content regressions](../../../core/intelligence/test_preferences_content.py#L1) | 620 篇检索、个人隔离、偏好版本、SQL/FTS、内容去重与降级 |
 | [workspace state](../../../web_ui/src/components/intelligence/useIntelligenceWorkspace.ts#L1)、[state contracts](../../../web_ui/src/components/intelligence/workspaceState.ts#L1) | 单一状态、按账号/工作区保存、旧请求栅栏、日期分享隔离 |
 | [floating UI](../../../web_ui/src/components/intelligence/IntelligenceHub.vue#L1)、[reader](../../../web_ui/src/components/intelligence/ArticleReader.vue#L1)、[filters](../../../web_ui/src/components/intelligence/WorkspaceFilters.vue#L1) | 同层阅读/返回、可调宽度、筛选/主题/来源/日期、偏好撤销及手动批量关联 |
-| [UI regression](../../../web_ui/tests/intelligence-state.test.cjs#L1)、[scoped checker](../../../web_ui/tests/check-intelligence.cjs#L1)、[API binding](../../../web_ui/src/api/intelligence.ts#L1) | 8 个无服务状态测试；脚本类型检查与 SFC 编译，非浏览器验收 |
+| [UI regression](../../../web_ui/tests/intelligence-state.test.cjs#L1)、[scoped checker](../../../web_ui/tests/check-intelligence.cjs#L1)、[API binding](../../../web_ui/src/api/intelligence.ts#L1) | 10 个无服务状态测试；脚本类型检查与 SFC 编译，非浏览器验收 |
+| [connectors](../../../core/intelligence/connectors.py#L1)、[operations](../../../core/intelligence/operations.py#L1)、[connector tests](../../../core/intelligence/test_connectors.py#L1) | 能力与供应商状态分离、公开 Feed 文件、身份/用量幂等、本地状态投影；无供应商执行 |
+| [connector panel](../../../web_ui/src/components/intelligence/ConnectorPanel.vue#L1) | 状态、冷却、日报覆盖和显式公开文件预览/导入；不联网探测 |
+| [events](../../../core/intelligence/events.py#L1)、[outbox](../../../core/intelligence/outbox.py#L1) | 空 Publisher 保留 pending；过期租约不得确认或改写重试 |
+| [legacy content](../../../core/article_content.py#L1)、[repair job](../../../jobs/fetch_no_article.py#L1) | 排除 connector 文章，禁止文件导入后隐式补抓 |
+| [offline runner](../../../tools/test_intelligence_offline.py#L1)、[error memory](../../knowledge/error-memory/legacy-job-import-runtime-side-effects.md) | 旧 import 触发 Redis 的事件、前置网络/进程/DB 守卫与独立影响核验门禁 |
+| [asset sync](../../../tools/sync_intelligence_ui.cjs#L1)、[served index](../../../static/index.html#L1)、[HTML source](../../../web_ui/index.html#L1) | 增量同步 129 个文件；15 个本地引用可达，旧哈希文件保留；首页源文件统一 LF |
 
-未实施：真实数据库迁移、账号登录、收费调用、运行服务、部署、推送及全局规则修改。
+未实施：真实 SQL 数据库迁移、账号登录、收费调用、服务部署、推送及全局规则修改。
+例外事件：一次旧模块测试导入连接 Redis 并启动进程内队列，进程已退出；可能的状态写入未核验，
+未擅自清理。后续 91 项测试在前置隔离守卫下通过，不能因此抹去先前事件。

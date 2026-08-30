@@ -18,6 +18,7 @@ from core.config import cfg
 from core.db import DB
 from core.models.base import DATA_STATUS
 from core.models.feed import Feed
+from core.models.article import Article
 from core.intelligence.exporting import SingleArticleExporter
 from core.intelligence.models import (
     ArticleTopic,
@@ -46,12 +47,25 @@ from core.intelligence.settings import InfrastructureSettings
 from core.intelligence.storage import build_content_store
 from core.intelligence.preferences import revoke_rule, save_filter
 from core.intelligence.ranking import RankingQuery
+from core.intelligence.connectors import MAX_BYTES, capabilities, import_feed, preview_feed
+from core.intelligence.operations import operations_snapshot
 
 from .base import error_response, success_response
 
 
 router = APIRouter(tags=["智能聚合 v2"])
 public_router = APIRouter(tags=["公开日报"])
+
+
+class ConnectorPreviewRequest(BaseModel):
+    provider: Literal["local-feed", "supsub", "wechat2rss"] = "local-feed"
+    content: str = Field(min_length=1, max_length=MAX_BYTES)
+
+
+class ConnectorImportRequest(ConnectorPreviewRequest):
+    source_key: str = Field(min_length=1, max_length=120)
+    request_id: str = Field(min_length=8, max_length=120)
+    confirm_public_content: Literal[True]
 
 
 def get_intelligence_session():
@@ -209,6 +223,50 @@ def bootstrap_workspace(session: SessionDependency, current_user: CurrentUser):
         raise _service_error(exc) from exc
 
 
+@router.get("/connectors", summary="声明连接器能力与未验收边界")
+def connector_capabilities(current_user: CurrentUser):
+    _identity(current_user)
+    return success_response(capabilities())
+
+
+@router.get("/operations", summary="只读查看当前工作区队列与覆盖状态，不探测外部服务")
+def operations(session: SessionDependency, current_user: CurrentUser,
+               workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        return success_response(operations_snapshot(session, workspace_id=workspace_id, user_id=user_id,
+            settings=InfrastructureSettings.from_env(cfg.get),
+            collector_configured=bool(cfg.get("intelligence.collector_enabled", False)),
+            jobs_configured=bool(cfg.get("intelligence.enabled", False))))
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.post("/connectors/preview", summary="预览已提供的 Feed 或 OPML 文本，不请求 URL")
+def preview_connector(payload: ConnectorPreviewRequest, session: SessionDependency, current_user: CurrentUser,
+                      workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        return success_response(preview_feed(payload.content, payload.provider))
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.post("/connectors/import", summary="管理员显式导入公开文章文件，不订阅或消耗供应商额度")
+def import_connector(payload: ConnectorImportRequest, session: SessionDependency, current_user: CurrentUser,
+                     workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        if current_user.get("role") != "admin":
+            raise AccessDenied("administrator authorization required for the shared legacy article store")
+        return success_response(import_feed(session, workspace_id=workspace_id, user_id=user_id,
+            provider=payload.provider, source_key=payload.source_key, content=payload.content, request_id=payload.request_id))
+    except Exception as exc:
+        session.rollback()
+        raise _service_error(exc) from exc
+
+
 @router.post("/workspaces/{workspace_id}/legacy-import", summary="管理员显式分批关联历史文章")
 def import_legacy_articles(workspace_id: str, payload: LegacyImportRequest,
                             session: SessionDependency, current_user: CurrentUser):
@@ -236,8 +294,23 @@ def available_sources(session: SessionDependency, current_user: CurrentUser,
         if search:
             pattern = "%" + search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
             query = query.where(Feed.mp_name.ilike(pattern, escape="\\"))
-        return success_response([{"id": row.id, "name": row.mp_name or row.id, "provider": "we-mp-rss"}
-                                 for row in session.execute(query.order_by(Feed.mp_name, Feed.id).limit(100))])
+        sources = [{"id": row.id, "name": row.mp_name or row.id, "provider": "we-mp-rss"}
+                   for row in session.execute(query.order_by(Feed.mp_name, Feed.id).limit(100))]
+        for source_id, metadata in session.execute(select(Article.mp_id, Article.extinfo).join(
+            WorkspaceArticle, WorkspaceArticle.article_id == Article.id,
+        ).where(WorkspaceArticle.workspace_id == workspace_id, Article.id.like("connector:%"),
+                Article.status != DATA_STATUS.DELETED).distinct().order_by(Article.mp_id).limit(100)):
+            try:
+                metadata = json.loads(metadata or "{}")
+            except (ValueError, TypeError):
+                metadata = {}
+            if not isinstance(metadata, dict):
+                metadata = {}
+            alias = str(metadata.get("source_key") or source_id)
+            if search.lower() not in alias.lower():
+                continue
+            sources.append({"id": source_id, "name": alias, "provider": metadata.get("connector_provider", "local-feed")})
+        return success_response(sources)
     except Exception as exc:
         raise _service_error(exc) from exc
 

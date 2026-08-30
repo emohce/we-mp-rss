@@ -27,8 +27,10 @@ class EventPublisher(Protocol):
 
 
 class NullPublisher:
+    transport_enabled = False
+
     def publish(self, event: EventEnvelope) -> None:
-        return None
+        raise RuntimeError("no external event transport configured")
 
 
 class RedisCoordinator:

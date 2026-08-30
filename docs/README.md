@@ -1,6 +1,6 @@
 # 微信公众号智能聚合系统文档索引
 
-Last synchronized: 2026-08-25
+Last synchronized: 2026-08-30
 
 本目录是 `we-mp-rss` 智能聚合项目的唯一当前文档入口。旧 `wechat-download-api` 与
 `Wechat2RSS` 只保留证据和行为参考角色；后续需求、采用决策、验证结论与实现状态都在本仓库更新。
@@ -11,7 +11,7 @@ Last synchronized: 2026-08-25
 | --- | --- | --- |
 | 1 | [原始需求摘要](tasks/260824-wechat-intelligence-hub/raw-requirement.md) | 保留每次用户补充和覆盖关系，不保存逐字对话。 |
 | 2 | [Controlled Spec](tasks/260824-wechat-intelligence-hub/spec.md) | 当前产品需求与边界的唯一规范化权威。 |
-| 3 | [Intelligence Hub v2](intelligence-hub.md) | 已交付架构、配置、交互和运行门禁。 |
+| 3 | [Intelligence Hub v3](intelligence-hub.md) | 已交付本地架构、离线契约、交互和独立运行门禁。 |
 | 4 | [旧项目迁移矩阵](migrations/wechat-download-api.md) | 把旧能力逐项标成已实现、部分实现、计划、仅参考或已否决。 |
 | 5 | [采集路线与开源边界](research/wechat-collection-landscape.md) | 采集原理、限频、替代 API、开源和许可证调研。 |
 | 6 | [SupSub 核验](research/supsub-integration.md) | SupSub 当前能力、价格快照、风险和分阶段采用决定。 |

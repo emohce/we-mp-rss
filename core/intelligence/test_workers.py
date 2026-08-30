@@ -18,6 +18,7 @@ from .models import (
     CollectionJob,
     CollectorAccount,
     CollectorCursor,
+    SourceCheckpoint,
     OutboxEvent,
     RateLimitLedger,
     Workspace,
@@ -49,7 +50,7 @@ class FakeCollector:
                     "status": 1,
                 },
             ),
-            next_cursor={"offset": int(cursor.get("offset", 0)) + 1},
+            next_cursor={"offset": int(cursor.get("offset", 0)) + 1, "exhausted": True},
             ingestion_source="fake",
         )
 
@@ -147,8 +148,11 @@ class WorkerInfrastructureTest(unittest.TestCase):
             self.assertIsNotNone(session.get(Article, "collected-1"))
             stored_job = session.get(CollectionJob, job.id)
             self.assertEqual(stored_job.state, "completed")
-            cursor = session.scalar(select(CollectorCursor))
-            self.assertEqual(cursor.cursor, {"offset": 1})
+            cursor = session.scalar(select(SourceCheckpoint))
+            self.assertEqual(cursor.mode, "head")
+            self.assertEqual(cursor.cursor, {})
+            self.assertEqual(cursor.head_ids, ["collected-1"])
+            self.assertIsNone(session.scalar(select(CollectorCursor)))
             link = session.scalar(select(WorkspaceArticle))
             self.assertEqual(link.article_id, "collected-1")
             event = session.scalar(select(OutboxEvent))
@@ -160,6 +164,7 @@ class WorkerInfrastructureTest(unittest.TestCase):
 
     def test_shared_source_collection_fans_out_without_duplicate_provider_calls(self) -> None:
         with self.session_factory() as session:
+            session.get(CollectorAccount, "account").workspace_id = None
             session.add(Workspace(id="workspace-2", name="W2", slug="w2", owner_user_id="user-2"))
             session.add_all(
                 [
@@ -534,6 +539,16 @@ class ProviderAdapterTest(unittest.TestCase):
             adapter.fetch_page(source_id="source", cursor={}, page_budget=1)
         self.assertEqual(raised.exception.code, "200013")
         self.assertEqual(len(http.calls), 1)
+
+    def test_invalid_publish_payload_is_not_an_exhausted_page(self) -> None:
+        for publish_page in (None, {}, {"publish_list": "invalid"},
+                             {"publish_list": [{"publish_info": "broken json"}]}):
+            adapter = WeMpRssCollectorAdapter(
+                session_factory=self.session_factory, token_getter=lambda *args: "fixture",
+                http=FakeHttp(FakeResponse({"base_resp": {"ret": 0}, "publish_page": publish_page})),
+            )
+            with self.assertRaises(CollectorError):
+                adapter.fetch_page(source_id="source", cursor={}, page_budget=1)
 
     def test_paid_api_requires_https_allowlist_and_uses_bounded_contract(self) -> None:
         with self.assertRaises(ValueError):

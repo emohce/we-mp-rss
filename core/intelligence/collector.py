@@ -4,13 +4,11 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Callable, Protocol
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from core.models.article import Article
-
+from .collection_state import CollectionState, LeaseLost, SourceBusy
 from .jobs import ClaimedJob, JobRepository
-from .models import CollectorAccount, CollectorCursor, utcnow
+from .models import CollectorAccount, utcnow
 from .rate_limit import (
     RateLimitRepository,
     RateSignal,
@@ -68,8 +66,10 @@ class CollectionWorker:
         self.rate_limits = rate_limits
         self.adapters = adapters
         self.max_articles_per_page = min(max(max_articles_per_page, 1), 500)
+        self.state = CollectionState(session_factory)
 
     def run_once(self, *, now: datetime | None = None) -> str:
+        clock = (lambda: now) if now is not None else utcnow
         now = now or utcnow()
         claimed = self.jobs.claim_next(now=now)
         if claimed is None:
@@ -82,6 +82,14 @@ class CollectionWorker:
                 error_message="collector account is not configured",
             )
             return "account_not_configured"
+        with self.session_factory() as session:
+            account = session.get(CollectorAccount, claimed.account_id)
+            if (account is None or account.status not in {"healthy", "probe"}
+                    or account.provider != claimed.provider
+                    or account.workspace_id not in {None, claimed.workspace_id}):
+                self.jobs.fail(job_id=claimed.id, lease_token=claimed.lease_token,
+                               error_code="account_disabled", error_message="collector account is unavailable")
+                return "account_disabled"
         adapter = self.adapters.get(claimed.provider)
         if adapter is None:
             self.jobs.fail(
@@ -92,26 +100,31 @@ class CollectionWorker:
             )
             return "adapter_not_configured"
 
+        try:
+            attempt = self.state.begin_page(claimed, now)
+        except SourceBusy:
+            self.jobs.defer(claimed, due_at=now + timedelta(seconds=60), error_code="source_busy")
+            return "source_deferred"
+        except LeaseLost:
+            self.jobs.fail(job_id=claimed.id, lease_token=claimed.lease_token,
+                           error_code="checkpoint_superseded", error_message="checkpoint or lease advanced")
+            return "lease_lost"
+
         admitted, snapshot = self.rate_limits.allow_request(
             claimed.provider,
             claimed.account_id,
+            source_id=claimed.source_id,
             now=now,
         )
         if not admitted:
             due_at = snapshot.cooldown_until or (now + timedelta(minutes=1))
-            self._retry_or_fail(
-                claimed,
-                due_at=due_at,
-                error_code="local_rate_budget",
-                error_message="collector request deferred by rate policy",
-            )
+            self.jobs.defer(claimed, due_at=due_at, error_code="local_rate_budget")
             return "rate_deferred"
 
-        cursor = self._cursor(claimed.account_id, claimed.source_id)
         try:
             page = adapter.fetch_page(
                 source_id=claimed.source_id,
-                cursor=cursor,
+                cursor=attempt.cursor,
                 page_budget=1,
             )
             if len(page.articles) > self.max_articles_per_page:
@@ -119,22 +132,16 @@ class CollectionWorker:
                     "page_too_large",
                     safe_message="collector page exceeded the configured article limit",
                 )
-            article_ids = self._persist_articles(claimed, page)
+            result = self.state.finish_page(claimed, attempt, page, clock())
             self.rate_limits.apply_signal(
                 claimed.provider,
                 claimed.account_id,
                 RateSignal.SUCCESS,
                 now=now,
             )
-            self.jobs.complete_page(
-                job_id=claimed.id,
-                lease_token=claimed.lease_token,
-                account_id=claimed.account_id,
-                next_cursor=page.next_cursor,
-                article_ids=article_ids,
-                ingestion_source=page.ingestion_source[:40],
-            )
-            return "completed"
+            return result
+        except LeaseLost:
+            return "lease_lost"
         except CollectorError as exc:
             signal = classify_provider_error(exc.code, exc.http_status)
             rate_snapshot = self.rate_limits.apply_signal(
@@ -178,43 +185,6 @@ class CollectionWorker:
             account.status = "disabled"
             account.last_error_code = error_code[:80]
             session.commit()
-
-    def _cursor(self, account_id: str, source_id: str) -> dict:
-        with self.session_factory() as session:
-            cursor = session.scalar(
-                select(CollectorCursor).where(
-                    CollectorCursor.account_id == account_id,
-                    CollectorCursor.source_id == source_id,
-                )
-            )
-            return dict(cursor.cursor or {}) if cursor else {}
-
-    def _persist_articles(self, claimed: ClaimedJob, page: CollectedPage) -> list[str]:
-        allowed_columns = {column.name for column in Article.__table__.columns} - {"id"}
-        seen: set[str] = set()
-        with self.session_factory() as session:
-            for raw in page.articles:
-                article_id = str(raw.get("id") or "").strip()
-                if not article_id or len(article_id) > 255 or article_id in seen:
-                    raise CollectorError(
-                        "invalid_article_id",
-                        safe_message="collector returned an invalid or duplicate article id",
-                    )
-                seen.add(article_id)
-                article = session.get(Article, article_id)
-                values = {
-                    key: value
-                    for key, value in raw.items()
-                    if key in allowed_columns and value is not None
-                }
-                values.setdefault("mp_id", claimed.source_id)
-                if article is None:
-                    session.add(Article(id=article_id, **values))
-                else:
-                    for key, value in values.items():
-                        setattr(article, key, value)
-            session.commit()
-        return list(seen)
 
     def _retry_or_fail(
         self,

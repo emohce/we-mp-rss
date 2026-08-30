@@ -138,23 +138,25 @@ class WeMpRssCollectorAdapter:
                     "invalid_publish_page",
                     safe_message="公众号文章页数据无法解析",
                 ) from exc
-        publish_page = publish_page if isinstance(publish_page, dict) else {}
+        if not isinstance(publish_page, dict) or not isinstance(publish_page.get("publish_list"), list):
+            raise CollectorError("invalid_publish_page", safe_message="公众号文章页缺少有效列表")
         articles: list[dict] = []
-        for published in publish_page.get("publish_list") or []:
+        for published in publish_page["publish_list"]:
             if not isinstance(published, dict):
-                continue
+                raise CollectorError("invalid_publish_page", safe_message="公众号文章页条目无效")
             raw_info = published.get("publish_info") or {}
             if isinstance(raw_info, str):
                 try:
                     raw_info = json.loads(raw_info)
-                except json.JSONDecodeError:
-                    continue
-            if not isinstance(raw_info, dict):
-                continue
-            for item in raw_info.get("appmsgex") or []:
+                except json.JSONDecodeError as exc:
+                    raise CollectorError("invalid_publish_info", safe_message="公众号文章条目无法解析") from exc
+            if not isinstance(raw_info, dict) or not isinstance(raw_info.get("appmsgex"), list):
+                raise CollectorError("invalid_publish_info", safe_message="公众号文章条目结构无效")
+            for item in raw_info["appmsgex"]:
                 normalized = _normalize_wechat_article(source_id, item, raw_info)
-                if normalized:
-                    articles.append(normalized)
+                if normalized is None:
+                    raise CollectorError("invalid_article", safe_message="公众号文章缺少有效标识")
+                articles.append(normalized)
         return CollectedPage(
             articles=tuple(articles),
             next_cursor={"page": page + 1, "exhausted": not bool(articles)},

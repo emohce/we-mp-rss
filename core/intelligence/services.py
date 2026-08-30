@@ -8,6 +8,7 @@ import secrets
 from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
 from sqlalchemy import and_, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, aliased
 
 from core.models.article import Article
@@ -770,15 +771,19 @@ class SubscriptionService:
                 .limit(1)
             )
         if account is None and provider == "we-mp-rss":
-            account = CollectorAccount(
-                id=SubscriptionService.GLOBAL_WE_MP_RSS_ACCOUNT_ID,
-                workspace_id=None,
-                provider=provider,
-                label="现有 we-mp-rss 授权",
-                secret_ref="driver.token",
-            )
-            session.add(account)
-            session.flush()
+            try:
+                with session.begin_nested():
+                    account = CollectorAccount(
+                        id=SubscriptionService.GLOBAL_WE_MP_RSS_ACCOUNT_ID,
+                        workspace_id=None, provider=provider, label="现有 we-mp-rss 授权",
+                        secret_ref="driver.token",
+                    )
+                    session.add(account)
+                    session.flush()
+            except IntegrityError:
+                account = session.get(CollectorAccount, SubscriptionService.GLOBAL_WE_MP_RSS_ACCOUNT_ID)
+                if account is None:
+                    raise
         existing_link = select(WorkspaceArticle.id).where(
             WorkspaceArticle.workspace_id == workspace_id,
             WorkspaceArticle.article_id == Article.id,
@@ -792,7 +797,7 @@ class SubscriptionService:
             )
             .order_by(Article.publish_time.desc(), Article.id.desc())
             .limit(500)
-        ).all()
+        ).all() if provider == "we-mp-rss" else []
         for article_id, known_source_id in known_articles:
             session.add(
                 WorkspaceArticle(
@@ -815,8 +820,8 @@ class SubscriptionService:
                 account_id=account.id if account else None,
                 provider=provider,
                 source_id=source_id,
-                kind="discover",
-                payload={"page_budget": 1, "reason": "new_subscription"},
+                kind="head",
+                payload={"page_budget": 3, "reason": "new_subscription"},
                 idempotency_key=idempotency_key,
                 priority=50,
             )

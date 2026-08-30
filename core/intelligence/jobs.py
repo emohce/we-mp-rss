@@ -92,6 +92,12 @@ class JobRepository:
         now = now or utcnow()
         for _ in range(3):
             with self.session_factory() as session:
+                session.execute(update(CollectionJob).where(
+                    CollectionJob.state == "running", CollectionJob.lease_expires_at <= now,
+                    CollectionJob.attempts >= CollectionJob.max_attempts,
+                ).values(state="failed", lease_token="", lease_expires_at=None,
+                         last_error_code="lease_exhausted", updated_at=now))
+                session.commit()
                 candidate_id = session.scalar(
                     select(CollectionJob.id)
                     .where(
@@ -116,6 +122,8 @@ class JobRepository:
                     update(CollectionJob)
                     .where(
                         CollectionJob.id == candidate_id,
+                        CollectionJob.due_at <= now,
+                        CollectionJob.attempts < CollectionJob.max_attempts,
                         or_(
                             CollectionJob.state.in_(["queued", "retry"]),
                             and_(
@@ -153,6 +161,18 @@ class JobRepository:
                 )
         return None
 
+    def defer(self, claimed: ClaimedJob, *, due_at: datetime, error_code: str) -> bool:
+        """Waiting on our own budget/source lease is not a provider failure."""
+        with self.session_factory() as session:
+            result = session.execute(update(CollectionJob).where(
+                CollectionJob.id == claimed.id, CollectionJob.state == "running",
+                CollectionJob.lease_token == claimed.lease_token,
+            ).values(state="queued", attempts=max(0, claimed.attempts - 1), due_at=due_at,
+                     lease_token="", lease_expires_at=None, last_error_code=error_code,
+                     last_error_message="local admission deferred"))
+            session.commit()
+            return result.rowcount == 1
+
     def complete_page(
         self,
         *,
@@ -163,7 +183,7 @@ class JobRepository:
         article_ids: list[str],
         ingestion_source: str,
     ) -> None:
-        """Advance a cursor only after every declared article exists and is visible."""
+        """Legacy explicit cursor API. Runtime collection uses CollectionState."""
 
         with self.session_factory() as session:
             job = session.scalar(
@@ -171,6 +191,7 @@ class JobRepository:
                     CollectionJob.id == job_id,
                     CollectionJob.state == "running",
                     CollectionJob.lease_token == lease_token,
+                    CollectionJob.lease_expires_at > utcnow(),
                 )
             )
             if not job:

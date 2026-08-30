@@ -263,11 +263,12 @@ class DailyAutomationScheduler:
                     provider=subscription.provider,
                     source_id=subscription.source_id,
                     account_id=account.id if account else None,
+                    kind="head",
                     idempotency_key=(
                         f"daily-collection:{account_key}:{subscription.provider}:"
                         f"{subscription.source_id}:{day.isoformat()}"
                     ),
-                    payload={"page_budget": 1, "schedule_date": day.isoformat()},
+                    payload={"page_budget": 3, "schedule_date": day.isoformat()},
                     priority=20,
                     due_at=collection_due,
                 )

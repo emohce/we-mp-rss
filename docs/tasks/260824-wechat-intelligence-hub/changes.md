@@ -109,5 +109,9 @@ Updated: 2026-08-25
 | [migration tests](../../../core/intelligence/test_migration.py#L1)、[job startup](../../../jobs/intelligence.py#L1) | 离线/就绪/启动回归和旧 schema 拒绝启动 |
 | [DB package](../../../vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/plan.md) | plan/sql/verify 人工执行、恢复与发布门禁 |
 | [DB inventory](../../../vibe/ai-db/project-memory/schema_inventory.md)、[technical details](../../../vibe/knowledge/technical-details.md) | 同步新版本、启动事实及其路由/交接说明 |
+| [collection state](../../../core/intelligence/collection_state.py#L1)、[worker](../../../core/intelligence/collector.py#L1)、[jobs](../../../core/intelligence/jobs.py#L1) | 独立 head/backfill、租约栅栏、原子页面事务与不消耗重试的等待 |
+| [rate policy](../../../core/intelligence/rate_limit.py#L1)、[providers](../../../core/intelligence/providers.py#L1) | 数据库分层预算；损坏的上游响应不得作为空页推进 |
+| [scheduler](../../../core/intelligence/workflow.py#L1)、[services](../../../core/intelligence/services.py#L1) | 每日首页任务、私有账号隔离、共享账号并发创建保护 |
+| [collection regressions](../../../core/intelligence/test_collection_state.py#L1)、[worker tests](../../../core/intelligence/test_workers.py#L1)、[service tests](../../../core/intelligence/test_services.py#L1) | 多日、恢复、页预算、租户和契约回归 |
 
 未实施：真实数据库迁移、账号登录、收费调用、运行服务、部署、推送及全局规则修改。

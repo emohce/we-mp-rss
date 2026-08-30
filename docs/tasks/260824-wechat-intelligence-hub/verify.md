@@ -170,7 +170,10 @@ Documentation level: `controlled`
 - WU-11: 43 focused intelligence tests passed (including four new migration regressions); affected Python
   compilation passed. Frozen SQLite/PostgreSQL base and v2-delta SQL rendered without a connection. Actual
   migration remains blocked by the [DBA handoff](../../../vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/sql.md).
-- WU-12..16: pending; historical 39-test evidence does not validate freshness, daily coverage or ranking parity.
+- WU-12: 53 intelligence tests passed, including multi-day fresh polling, independent backfill, truncated
+  coverage, expired/replaced leases, atomic rollback, private scope, durable layered budgets and disabled accounts.
+  Invalid provider payloads fail closed instead of being interpreted as an exhausted article list.
+- WU-13..16: pending; historical 39-test evidence does not validate daily coverage or ranking parity.
 - Automatic global router reports an oversized response owner and registry/loading-graph drift. The user permits
   bypassing only that automatic check for this implementation turn; no global rule was changed.
 - Verification route: scoped docs plus isolated intelligence package contracts and affected frontend checks.

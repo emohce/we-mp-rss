@@ -70,6 +70,11 @@ Documentation level: `controlled`
     "migrations/intelligence/versions/int_v2_20260824.py",
     "migrations/intelligence/versions/int_v3_20260830.py",
     "web_ui/src/components/intelligence/IntelligenceHub.vue",
+    "web_ui/src/components/intelligence/ArticleReader.vue",
+    "web_ui/src/components/intelligence/WorkspaceFilters.vue",
+    "web_ui/src/components/intelligence/workspaceState.ts",
+    "web_ui/src/components/intelligence/useIntelligenceWorkspace.ts",
+    "web_ui/src/api/intelligence.ts",
     "core/intelligence/ranking.py",
     "core/intelligence/preferences.py",
     "core/intelligence/search.py",
@@ -84,7 +89,9 @@ Documentation level: `controlled`
     "core/intelligence/test_services.py",
     "core/intelligence/test_daily.py",
     "core/intelligence/test_api.py",
-    "core/intelligence/test_preferences_content.py"
+    "core/intelligence/test_preferences_content.py",
+    "web_ui/tests/intelligence-state.test.cjs",
+    "web_ui/tests/check-intelligence.cjs"
   ],
   "git_scope_prefixes": [
     "AGENTS.md",

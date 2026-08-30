@@ -40,7 +40,7 @@ web_ui/src/
 | Personal relevance | shared SQL ranking and approval/revocation | `core/intelligence/ranking.py`, `core/intelligence/preferences.py` | inbox/digest parity, feedback-first, all-history evidence | disposable tests, 2026-08-30 |
 | Local search | persisted search documents and native indexes | `core/intelligence/search.py` | SQLite FTS5; PostgreSQL GIN with literal fallback | SQLite fixture + PostgreSQL SQL compilation, 2026-08-30 |
 | APIs | tenant-aware v2 endpoints | `apis/intelligence.py` | article/analysis/feedback/digest/download | code + test receipt |
-| UI | Vue floating management | `web_ui/src/components/intelligence/IntelligenceHub.vue` | global drawer; no extra management route | code + build receipt |
+| UI | single state owner and inline reader | `web_ui/src/components/intelligence/useIntelligenceWorkspace.ts`, `web_ui/src/components/intelligence/IntelligenceHub.vue` | scoped persistence/request fencing; explicit legacy import; no nested reader modal | 8 state tests + scripts/type/build; browser excluded |
 | Operators | profile/config/compose docs | `config.example.yaml`, `compose/docker-compose.intelligence.yaml`, `docs/intelligence-hub.md` | real services remain deployment-gated | document + static parse |
 
 ## Known Runtime Boundary

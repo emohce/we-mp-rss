@@ -29,13 +29,14 @@ Compact project-current router. Durable product requirements and execution evide
 
 | Task | State | Authority | Verification | Main open gate |
 | --- | --- | --- | --- | --- |
-| WeChat intelligence core | `v3-implementing / runtime-gated / unpushed` | [Spec](../../docs/tasks/260824-wechat-intelligence-hub/spec.md) | [historical v2 receipt; v3 pending](../../docs/tasks/260824-wechat-intelligence-hub/verify.md) | versioned schema, head polling, digest reconciliation and shared ranking |
+| WeChat intelligence core | `v3-implementing / runtime-gated / unpushed` | [Spec](../../docs/tasks/260824-wechat-intelligence-hub/spec.md) | [v3 WU-10..15 evidence](../../docs/tasks/260824-wechat-intelligence-hub/verify.md) | WU-16 connector fixtures/operations and final served assets |
 | SupSub adapter canary | `deferred-by-scope` | [research](../../docs/research/supsub-integration.md) | public evidence only | fixture/account and explicit external-action gate |
 | CodeNote + AI-DB initialization | `committed-local / static-verified` | this hub + [AI-DB](../ai-db/README.md) | historical project/link/JSON/static audit | no live DB/runtime acceptance |
 
 ## Verification State
 
-- Latest accepted product evidence: 39 focused backend tests, offline three-dialect DDL render, Compose parse and Vue production build from the existing Controlled receipt.
+- Latest v3 evidence: 73 backend and 8 UI state tests, affected TS/SFC script checks and Vite build; frozen
+  SQLite/PostgreSQL SQL render. Runtime migration, provider/infra connectivity and browser acceptance remain open.
 - Current governance delta passed CodeNote project audit, exact project/path resolution, catalog 14/14, AI-DB 15/15, JSON/link and scoped secret checks; final staged diff remains the commit gate.
 - Unverified: live WeChat/SupSub, actual user DB/schema, PostgreSQL/Redis/MQTT connectivity, browser/accessibility, notifications, deployment and push.
 

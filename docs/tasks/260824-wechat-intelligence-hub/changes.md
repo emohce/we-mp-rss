@@ -118,5 +118,8 @@ Updated: 2026-08-25
 | [ranking](../../../core/intelligence/ranking.py#L1)、[preferences](../../../core/intelligence/preferences.py#L1) | 共用 SQL 排序、个性主题/摘要、全历史建议、可撤销规则和保存筛选 |
 | [search](../../../core/intelligence/search.py#L1)、[content](../../../core/intelligence/content.py#L1)、[export](../../../core/intelligence/exporting.py#L1) | 持久化正文检索、对象引用/哈希校验与真实 Markdown 转换 |
 | [preference/content regressions](../../../core/intelligence/test_preferences_content.py#L1) | 620 篇检索、个人隔离、偏好版本、SQL/FTS、内容去重与降级 |
+| [workspace state](../../../web_ui/src/components/intelligence/useIntelligenceWorkspace.ts#L1)、[state contracts](../../../web_ui/src/components/intelligence/workspaceState.ts#L1) | 单一状态、按账号/工作区保存、旧请求栅栏、日期分享隔离 |
+| [floating UI](../../../web_ui/src/components/intelligence/IntelligenceHub.vue#L1)、[reader](../../../web_ui/src/components/intelligence/ArticleReader.vue#L1)、[filters](../../../web_ui/src/components/intelligence/WorkspaceFilters.vue#L1) | 同层阅读/返回、可调宽度、筛选/主题/来源/日期、偏好撤销及手动批量关联 |
+| [UI regression](../../../web_ui/tests/intelligence-state.test.cjs#L1)、[scoped checker](../../../web_ui/tests/check-intelligence.cjs#L1)、[API binding](../../../web_ui/src/api/intelligence.ts#L1) | 8 个无服务状态测试；脚本类型检查与 SFC 编译，非浏览器验收 |
 
 未实施：真实数据库迁移、账号登录、收费调用、运行服务、部署、推送及全局规则修改。

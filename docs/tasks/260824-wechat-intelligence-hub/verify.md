@@ -182,7 +182,15 @@ Documentation level: `controlled`
   saved-filter validation, matches beyond 500, scope-bound cursors, bounded list query count, SQLite FTS5 and
   literal legacy-body search, PostgreSQL SQL compilation, real Markdown conversion, shared object hashes and
   verified local content fallback. No OpenAI/API credential work or real provider/S3/database action occurred.
-- WU-15..16: pending; historical frontend success does not validate the new reader state or connector runtime.
+- WU-15: 73 intelligence tests and 8 focused frontend tests passed. Admin bootstrap performs no legacy import;
+  explicit batches, resolved-source selection, paused subscriptions and backfill idempotency have API regressions.
+  UI tests exercise scope-bound persistence, stale filter/reader responses, close/reopen user isolation, old-date
+  share responses, two-level state Escape and reader isolation. Affected TS and compiled SFC scripts type-check;
+  templates compile and Vite production build passes. This is not full template-semantic or browser acceptance.
+  Existing upstream eval/large-chunk/dynamic-import warnings remain. Served asset synchronization is in WU-16.
+  UI preference lookup returned `not-activated` because this project has no design-preference-gate marker;
+  no UI Skill/CLI, mother-board edit, browser or runtime service was invoked. Existing Arco/source rules apply.
+- WU-16: implementing; historical integration research is not connector runtime or external canary acceptance.
 - Automatic global router reports an oversized response owner and registry/loading-graph drift. The user permits
   bypassing only that automatic check for this implementation turn; no global rule was changed.
 - Verification route: scoped docs plus isolated intelligence package contracts and affected frontend checks.

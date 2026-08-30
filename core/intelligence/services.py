@@ -8,12 +8,13 @@ import re
 import secrets
 from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, aliased
 
 from core.models.article import Article
 from core.models.base import DATA_STATUS
+from core.models.feed import Feed
 
 from .analysis import AnalysisEnvelope, AnalyzerPipeline
 from .daily import queue_reconciliations
@@ -493,6 +494,11 @@ class SubscriptionService:
         provider: str = "we-mp-rss",
     ) -> tuple[WorkspaceSubscription, CollectionJob | None]:
         TenantService.require_membership(session, workspace_id, user_id)
+        session.execute(update(Workspace).where(Workspace.id == workspace_id).values(updated_at=Workspace.updated_at))
+        if provider == "we-mp-rss":
+            feed = session.get(Feed, source_id)
+            if feed is None or not feed.faker_id or feed.status == DATA_STATUS.DELETED:
+                raise ValueError("select a locally resolved public-account source first")
         subscription = session.scalar(
             select(WorkspaceSubscription).where(
                 WorkspaceSubscription.workspace_id == workspace_id,
@@ -580,10 +586,42 @@ class SubscriptionService:
                 idempotency_key=idempotency_key,
                 priority=50,
             )
-            session.add(job)
+            try:
+                with session.begin_nested():
+                    session.add(job)
+                    session.flush()
+            except IntegrityError:
+                job = session.scalar(select(CollectionJob).where(CollectionJob.idempotency_key == idempotency_key))
+                if job is None:
+                    raise
         session.commit()
         session.refresh(subscription)
         return subscription, job
+
+    @staticmethod
+    def enqueue_backfill(session, *, workspace_id, user_id, subscription_id, request_id, page_budget=3):
+        TenantService.require_membership(session, workspace_id, user_id)
+        session.execute(update(Workspace).where(Workspace.id == workspace_id).values(updated_at=Workspace.updated_at))
+        subscription = session.scalar(select(WorkspaceSubscription).where(
+            WorkspaceSubscription.id == subscription_id, WorkspaceSubscription.workspace_id == workspace_id,
+            WorkspaceSubscription.status == "active", WorkspaceSubscription.provider == "we-mp-rss",
+        ))
+        if subscription is None:
+            raise AccessDenied("active supported subscription not found")
+        key = normalize_idempotency_key(f"manual-backfill:{subscription_id}:{request_id}", 160)
+        job = session.scalar(select(CollectionJob).where(CollectionJob.idempotency_key == key))
+        if job is None:
+            account = session.get(CollectorAccount, SubscriptionService.GLOBAL_WE_MP_RSS_ACCOUNT_ID)
+            if account is None or account.status not in {"healthy", "probe"}:
+                raise ValueError("collector account is unavailable")
+            job = CollectionJob(workspace_id=workspace_id, account_id=account.id, provider="we-mp-rss",
+                                source_id=subscription.source_id, kind="backfill", priority=5,
+                                payload={"page_budget": min(20, max(1, page_budget)), "reason": "explicit_backfill"},
+                                idempotency_key=key)
+            session.add(job)
+            session.commit()
+            session.refresh(job)
+        return job
 
 
 class DigestService:

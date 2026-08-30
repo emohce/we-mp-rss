@@ -4,7 +4,7 @@ import html
 import json
 import re
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 from core.auth import get_current_user_or_ak
 from core.config import cfg
 from core.db import DB
+from core.models.base import DATA_STATUS
+from core.models.feed import Feed
 from core.intelligence.exporting import SingleArticleExporter
 from core.intelligence.models import (
     ArticleTopic,
@@ -136,6 +138,20 @@ class SavedFilterRequest(BaseModel):
     filters: dict = Field(default_factory=dict)
 
 
+class LegacyImportRequest(BaseModel):
+    confirm: Literal[True]
+    batch_size: int = Field(default=200, ge=1, le=500)
+
+
+class SubscriptionStatusRequest(BaseModel):
+    status: Literal["active", "paused"]
+
+
+class BackfillRequest(BaseModel):
+    request_id: str = Field(min_length=8, max_length=64)
+    page_budget: int = Field(default=3, ge=1, le=20)
+
+
 def _proposal_data(proposal: PreferenceRuleProposal) -> dict:
     return {
         "id": proposal.id,
@@ -176,27 +192,52 @@ def bootstrap_workspace(session: SessionDependency, current_user: CurrentUser):
     user_id, username = _identity(current_user)
     try:
         workspace = TenantService.bootstrap_personal_workspace(session, user_id, username)
-        if current_user.get("role") == "admin":
-            backfill = TenantService.attach_legacy_articles(
-                session,
-                workspace_id=workspace.id,
-                user_id=user_id,
-                authorized=True,
-            )
-        else:
-            backfill = {
-                "attached": 0,
-                "has_more": False,
-                "skipped": "admin_required",
-            }
+        can_import = current_user.get("role") == "admin"
+        backfill = {"attached": 0, "has_more": False,
+                    "skipped": "explicit_request_required" if can_import else "admin_required"}
         return success_response(
             {
                 "id": workspace.id,
                 "name": workspace.name,
                 "slug": workspace.slug,
+                "user_id": user_id,
+                "can_import_legacy": can_import,
                 "legacy_backfill": backfill,
             }
         )
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.post("/workspaces/{workspace_id}/legacy-import", summary="管理员显式分批关联历史文章")
+def import_legacy_articles(workspace_id: str, payload: LegacyImportRequest,
+                            session: SessionDependency, current_user: CurrentUser):
+    user_id, _ = _identity(current_user)
+    try:
+        if current_user.get("role") != "admin":
+            raise AccessDenied("administrator authorization required")
+        return success_response(TenantService.attach_legacy_articles(
+            session, workspace_id=workspace_id, user_id=user_id, authorized=payload.confirm,
+            batch_size=payload.batch_size,
+        ))
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.get("/sources/available", summary="从本地已解析公众号选择来源")
+def available_sources(session: SessionDependency, current_user: CurrentUser,
+                       workspace_id: str = Query(min_length=1, max_length=32),
+                       search: str = Query(default="", max_length=120)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        query = select(Feed.id, Feed.mp_name).where(Feed.status != DATA_STATUS.DELETED,
+                                                   Feed.faker_id.is_not(None), Feed.faker_id != "")
+        if search:
+            pattern = "%" + search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            query = query.where(Feed.mp_name.ilike(pattern, escape="\\"))
+        return success_response([{"id": row.id, "name": row.mp_name or row.id, "provider": "we-mp-rss"}
+                                 for row in session.execute(query.order_by(Feed.mp_name, Feed.id).limit(100))])
     except Exception as exc:
         raise _service_error(exc) from exc
 
@@ -445,6 +486,38 @@ def list_subscriptions(
                 for item in subscriptions
             ]
         )
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.patch("/subscriptions/{subscription_id}", summary="暂停或恢复后续每日订阅采集")
+def update_subscription(subscription_id: str, payload: SubscriptionStatusRequest,
+                         session: SessionDependency, current_user: CurrentUser,
+                         workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        TenantService.require_membership(session, workspace_id, user_id)
+        subscription = session.scalar(select(WorkspaceSubscription).where(WorkspaceSubscription.id == subscription_id,
+                                                                          WorkspaceSubscription.workspace_id == workspace_id))
+        if subscription is None:
+            raise AccessDenied("subscription not found")
+        subscription.status = payload.status
+        session.commit()
+        return success_response({"id": subscription.id, "status": subscription.status,
+                                  "inflight_policy": "existing_daily_cohort_is_preserved"})
+    except Exception as exc:
+        raise _service_error(exc) from exc
+
+
+@router.post("/subscriptions/{subscription_id}/backfill", summary="显式入队有限页数的历史回填")
+def enqueue_subscription_backfill(subscription_id: str, payload: BackfillRequest,
+                                    session: SessionDependency, current_user: CurrentUser,
+                                    workspace_id: str = Query(min_length=1, max_length=32)):
+    user_id, _ = _identity(current_user)
+    try:
+        job = SubscriptionService.enqueue_backfill(session, workspace_id=workspace_id, user_id=user_id,
+            subscription_id=subscription_id, request_id=payload.request_id, page_budget=payload.page_budget)
+        return success_response({"job_id": job.id, "state": job.state, "mode": job.kind})
     except Exception as exc:
         raise _service_error(exc) from exc
 

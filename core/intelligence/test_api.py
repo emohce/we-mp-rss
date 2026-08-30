@@ -9,7 +9,7 @@ from pathlib import Path
 import requests
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -46,8 +46,9 @@ finally:
 
 from core.models.article import Article
 from core.models.base import Base
+from core.models.feed import Feed
 
-from .models import WorkspaceArticle
+from .models import WorkspaceArticle, WorkspaceSubscription, CollectionJob
 from .scheduling import DEFAULT_SCHEDULE
 
 
@@ -61,7 +62,7 @@ class IntelligenceApiContractTest(unittest.TestCase):
         tables = [
             table
             for name, table in Base.metadata.tables.items()
-            if name == "articles" or name.startswith("int_")
+            if name in {"articles", "feeds"} or name.startswith("int_")
         ]
         Base.metadata.create_all(self.engine, tables=tables)
         self.session_factory = sessionmaker(bind=self.engine, expire_on_commit=False)
@@ -235,6 +236,52 @@ class IntelligenceApiContractTest(unittest.TestCase):
                                          json={"event_type": "topic_correction", "value": {"topics": "bad"}})
         self.assertEqual(invalid_topic.status_code, 400)
         self.assertEqual(self.client.get("/api/v2/intelligence/feedback", params=params).json()["data"]["total"], 0)
+
+    def test_admin_bootstrap_never_imports_and_legacy_import_is_explicit_bounded(self):
+        with self.session_factory() as session:
+            session.add_all([Article(id=f"legacy-{i}", mp_id="legacy", title="Legacy", status=1) for i in range(3)])
+            session.commit()
+        endpoint = f"/api/v2/intelligence/workspaces/{self.workspace_id}/legacy-import"
+        self.assertEqual(self.client.post(endpoint, json={"confirm": True}).status_code, 404)
+        self.app.dependency_overrides[get_current_user_or_ak] = lambda: {
+            "user_id": "user-a", "username": "alice", "role": "admin", "auth_type": "test",
+        }
+        boot = self.client.post("/api/v2/intelligence/workspaces/bootstrap").json()["data"]
+        self.assertTrue(boot["can_import_legacy"])
+        self.assertEqual(boot["legacy_backfill"]["attached"], 0)
+        self.assertEqual(boot["legacy_backfill"]["skipped"], "explicit_request_required")
+        self.assertEqual(self.client.post(endpoint, json={"confirm": False}).status_code, 422)
+        with self.session_factory() as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(WorkspaceArticle)), 0)
+        batch = self.client.post(endpoint, json={"confirm": True, "batch_size": 2}).json()["data"]
+        self.assertEqual(batch, {"attached": 2, "has_more": True})
+        final = self.client.post(endpoint, json={"confirm": True, "batch_size": 2}).json()["data"]
+        self.assertEqual(final, {"attached": 1, "has_more": False})
+
+    def test_local_source_selection_subscription_pause_and_idempotent_backfill(self):
+        params = {"workspace_id": self.workspace_id}
+        with self.session_factory() as session:
+            session.add_all([Feed(id="resolved", mp_name="已解析公众号", faker_id="not-returned-secret", status=1),
+                             Feed(id="unresolved", mp_name="未解析公众号", status=1)])
+            session.commit()
+        choices = self.client.get("/api/v2/intelligence/sources/available", params=params).json()["data"]
+        self.assertEqual(choices, [{"id": "resolved", "name": "已解析公众号", "provider": "we-mp-rss"}])
+        invalid = self.client.post("/api/v2/intelligence/subscriptions", params=params,
+                                   json={"source_id": "unresolved", "provider": "we-mp-rss"})
+        self.assertEqual(invalid.status_code, 400)
+        with self.session_factory() as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(WorkspaceSubscription)), 0)
+        created = self.client.post("/api/v2/intelligence/subscriptions", params=params,
+                                   json={"source_id": "resolved", "provider": "we-mp-rss"}).json()["data"]
+        endpoint = f"/api/v2/intelligence/subscriptions/{created['subscription']['id']}"
+        for _ in range(2):
+            queued = self.client.post(endpoint + "/backfill", params=params, json={"request_id": "request-fixture", "page_budget": 3})
+            self.assertEqual(queued.status_code, 200)
+        with self.session_factory() as session:
+            self.assertEqual(session.scalar(select(func.count()).select_from(CollectionJob).where(CollectionJob.kind == "backfill")), 1)
+        paused = self.client.patch(endpoint, params=params, json={"status": "paused"}).json()["data"]
+        self.assertEqual(paused["inflight_policy"], "existing_daily_cohort_is_preserved")
+        self.assertEqual(self.client.post(endpoint + "/backfill", params=params, json={"request_id": "another-fixture"}).status_code, 404)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from core.models.article import Article
 from core.models.base import Base
+from core.models.feed import Feed
 
 from .analysis import CliAnalyzer, HeuristicAnalyzer
 from .exporting import SingleArticleExporter, safe_filename
@@ -47,12 +48,13 @@ class IntelligenceServiceTest(unittest.TestCase):
         tables = [
             table
             for name, table in Base.metadata.tables.items()
-            if name == "articles" or name.startswith("int_")
+            if name in {"articles", "feeds"} or name.startswith("int_")
         ]
         Base.metadata.create_all(self.engine, tables=tables)
         self.session = Session(self.engine)
         self.session.add_all(
             [
+                Feed(id="source-1", faker_id="fixture-source", mp_name="Fixture source", status=1),
                 Workspace(id="workspace-a", name="A", slug="a", owner_user_id="user-a"),
                 Workspace(id="workspace-b", name="B", slug="b", owner_user_id="user-b"),
                 WorkspaceMembership(workspace_id="workspace-a", user_id="user-a", role="owner"),

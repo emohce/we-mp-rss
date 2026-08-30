@@ -18,7 +18,8 @@ This directory is the project-local documentation workspace for database facts, 
 - Application storage profiles: SQLite Lite; PostgreSQL + Redis Standard; PostgreSQL + Redis + MQTT Distributed.
 - The SQL database and durable outbox are authoritative. Redis and MQTT are infrastructure components, not database-memory owners.
 - Runtime model evidence is in `core/models/`, `core/intelligence/models.py` and `core/intelligence/migration.py`.
-- Current schema contract: `intelligence-v2-20260824-1`, verified only by code/tests/offline rendering; no live user database was inspected in this initialization.
+- Current schema contract: `int_v3_20260830`; frozen Alembic baseline `int_v2_20260824`. Evidence is code/tests/offline
+  rendering, not live schema. [Versioned handoff](ai-db-tasks/260830/0941-intelligence-v3/plan.md) owns execution gates.
 - No production/test connection route, host, username, secret or database mutation authorization is registered.
 
 ## New DB Work

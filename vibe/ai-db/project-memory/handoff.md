@@ -12,7 +12,8 @@ Updated: 2026-08-25
 
 1. User/DBA selects an exact non-production environment and supplies a secret-safe read-only route.
 2. Run the read-only schema inspector and record environment-specific evidence in a new AI-DB task.
-3. Compare actual legacy and `int_*` objects with revision `intelligence-v2-20260824-1`; keep drift explicit.
+3. Compare actual legacy and `int_*` objects with revision `int_v3_20260830`; keep drift explicit and resolve
+   the exact source revision through the [v3 package](../ai-db-tasks/260830/0941-intelligence-v3/sql.md).
 4. If a migration is needed, author a full `sql.md` handoff with prerequisite inventory, DryRun, exact impact, postcheck, recovery and release order.
 5. User/DBA separately approves and executes any DDL/DML. TEST evidence does not authorize production.
 

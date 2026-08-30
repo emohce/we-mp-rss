@@ -10,9 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from sqlalchemy import create_engine
-
-from core.intelligence.migration import inspect_schema, render_ddl
+from core.intelligence.migration import inspect_schema, render_ddl, render_upgrade, readonly_inspection_engine
 
 
 def main() -> int:
@@ -24,15 +22,21 @@ def main() -> int:
     inspect_parser.add_argument("--database-url", required=True)
     ddl_parser = subparsers.add_parser("ddl", help="render reviewed offline DDL")
     ddl_parser.add_argument("--dialect", choices=["sqlite", "postgresql", "mysql"], required=True)
+    upgrade_parser = subparsers.add_parser("upgrade-sql", help="render frozen versioned SQL; never connect")
+    upgrade_parser.add_argument("--dialect", choices=["sqlite", "postgresql"], required=True)
+    upgrade_parser.add_argument("--from-revision", default="base", choices=["base", "int_v2_20260824", "int_v3_20260830"])
     args = parser.parse_args()
 
     if args.command == "ddl":
         print(render_ddl(args.dialect), end="")
         return 0
+    if args.command == "upgrade-sql":
+        print(render_upgrade(args.dialect, from_revision=args.from_revision), end="")
+        return 0
 
-    engine = create_engine(args.database_url, pool_pre_ping=True)
+    engine = readonly_inspection_engine(args.database_url)
     try:
-        result = inspect_schema(engine)
+        result = inspect_schema(engine, require_revision=True)
     finally:
         engine.dispose()
     print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))

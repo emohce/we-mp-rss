@@ -1,11 +1,11 @@
 # Schema Inventory
 
-Last verified: 2026-08-25
+Last verified: 2026-08-30
 Evidence: `code + prior disposable tests + offline DDL`; live state unverified
 
 ## Contract
 
-- Expected intelligence schema revision: `intelligence-v2-20260824-1`.
+- Expected intelligence schema revision: `int_v3_20260830`; predecessor `int_v2_20260824`.
 - Model owner: `core/intelligence/models.py` on shared SQLAlchemy metadata.
 - Required legacy dependency: `articles`.
 - Inspection owner: `core/intelligence/migration.py::inspect_schema`.
@@ -21,6 +21,15 @@ Evidence: `code + prior disposable tests + offline DDL`; live state unverified
 | AI/preferences | `int_topics`, `int_article_topics`, `int_analysis_runs`, `int_source_profiles`, `int_feedback_events`, `int_preference_rule_proposals`, `int_preference_rules` |
 | Digest/export/share | `int_digests`, `int_digest_items`, `int_share_links`, `int_export_jobs` |
 | Workflow/delivery | `int_workflow_jobs`, `int_delivery_channels`, `int_outbox_events` |
+| v3 collection | `int_source_checkpoints`, `int_collection_runs`, `int_request_budgets` |
+| v3 daily coverage | `int_daily_runs`, `int_daily_run_sources`, `int_digest_revisions` |
+| v3 preferences/search | `int_saved_filters`, `int_search_documents`; SQLite FTS5 / PostgreSQL GIN |
+| v3 provenance/usage | `int_connector_identities`, `int_connector_usage` |
+
+V3 adds rule version/revocation and digest run/revision/hash/coverage columns, permits multiple article pointers
+to one content hash, and makes shared collector labels unique through a partial index. Runtime readiness checks
+the applied version and uniqueness constraints, not only table names. Ordinary missing indexes are advisories.
+Execution remains governed by the [v3 handoff](../ai-db-tasks/260830/0941-intelligence-v3/plan.md).
 
 ## Current Evidence
 

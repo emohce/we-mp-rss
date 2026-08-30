@@ -127,7 +127,8 @@ class ArticleContentBlob(Base):
     article_id = Column(
         String(255), ForeignKey("articles.id", ondelete="CASCADE"), primary_key=True
     )
-    content_hash = Column(String(64), nullable=False, unique=True, index=True)
+    # Different articles may reference the same immutable object.
+    content_hash = Column(String(64), nullable=False, index=True)
     storage_backend = Column(String(20), nullable=False, default="local")
     object_key = Column(String(600), nullable=False)
     media_type = Column(String(100), nullable=False, default="text/html")
@@ -150,6 +151,13 @@ class CollectorAccount(Base):
     last_error_code = Column(String(80), nullable=False, default="")
     created_at = Column(DateTime, nullable=False, default=utcnow)
     updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+Index(
+    "uq_int_global_collector", CollectorAccount.provider, CollectorAccount.label, unique=True,
+    sqlite_where=CollectorAccount.workspace_id.is_(None),
+    postgresql_where=CollectorAccount.workspace_id.is_(None),
+)
 
 
 class CollectorCursor(Base):
@@ -322,6 +330,8 @@ class PreferenceRule(Base):
     condition = Column(JSON, nullable=False, default=dict)
     action = Column(JSON, nullable=False, default=dict)
     is_active = Column(Boolean, nullable=False, default=True)
+    version = Column(Integer, nullable=False, default=1, server_default="1")
+    revoked_at = Column(DateTime)
     created_at = Column(DateTime, nullable=False, default=utcnow)
 
 
@@ -339,6 +349,10 @@ class Digest(Base):
     title = Column(String(240), nullable=False)
     summary = Column(Text, nullable=False, default="")
     generated_at = Column(DateTime)
+    daily_run_id = Column(String(32), ForeignKey("int_daily_runs.id", ondelete="SET NULL"))
+    revision = Column(Integer, nullable=False, default=0, server_default="0")
+    input_hash = Column(String(64), nullable=False, default="", server_default="")
+    coverage = Column(JSON, nullable=False, default=dict, server_default="{}")
     created_at = Column(DateTime, nullable=False, default=utcnow)
 
 
@@ -451,3 +465,134 @@ class OutboxEvent(Base):
     last_error = Column(String(500), nullable=False, default="")
     created_at = Column(DateTime, nullable=False, default=utcnow)
     delivered_at = Column(DateTime)
+
+
+class SourceCheckpoint(Base):
+    __tablename__ = "int_source_checkpoints"
+    __table_args__ = (
+        UniqueConstraint("account_id", "source_id", "mode", name="uq_int_checkpoint_mode"),
+    )
+
+    id = Column(String(32), primary_key=True, default=new_id)
+    account_id = Column(String(32), ForeignKey("int_collector_accounts.id"), nullable=False)
+    source_id = Column(String(255), nullable=False)
+    mode = Column(String(20), nullable=False)
+    cursor = Column(JSON, nullable=False, default=dict)
+    head_ids = Column(JSON, nullable=False, default=list)
+    version = Column(Integer, nullable=False, default=0)
+    last_success_at = Column(DateTime)
+    lease_token = Column(String(64), nullable=False, default="")
+    lease_expires_at = Column(DateTime)
+
+
+class CollectionRun(Base):
+    __tablename__ = "int_collection_runs"
+
+    id = Column(String(32), primary_key=True, default=new_id)
+    job_id = Column(String(32), ForeignKey("int_collection_jobs.id"), nullable=False, unique=True)
+    checkpoint_id = Column(String(32), ForeignKey("int_source_checkpoints.id"), nullable=False)
+    mode = Column(String(20), nullable=False)
+    state = Column(String(24), nullable=False, default="running")
+    start_version = Column(Integer, nullable=False, default=0)
+    cursor = Column(JSON, nullable=False, default=dict)
+    head_ids = Column(JSON, nullable=False, default=list)
+    boundary_ids = Column(JSON, nullable=False, default=list)
+    pages = Column(Integer, nullable=False, default=0)
+    article_count = Column(Integer, nullable=False, default=0)
+    started_at = Column(DateTime, nullable=False, default=utcnow)
+    finished_at = Column(DateTime)
+    error_code = Column(String(80), nullable=False, default="")
+
+
+class RequestBudget(Base):
+    __tablename__ = "int_request_budgets"
+
+    scope_key = Column(String(240), primary_key=True)
+    next_allowed_at = Column(DateTime, nullable=False)
+    admitted_count = Column(Integer, nullable=False, default=0)
+    version = Column(Integer, nullable=False, default=0)
+
+
+class DailyRun(Base):
+    __tablename__ = "int_daily_runs"
+    __table_args__ = (UniqueConstraint("workspace_id", "run_date", name="uq_int_daily_run"),)
+
+    id = Column(String(32), primary_key=True, default=new_id)
+    workspace_id = Column(String(32), ForeignKey("int_workspaces.id"), nullable=False)
+    run_date = Column(String(10), nullable=False)
+    cutoff_at = Column(DateTime, nullable=False)
+    publish_after = Column(DateTime, nullable=False)
+    collection_enabled = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+
+
+class DailyRunSource(Base):
+    __tablename__ = "int_daily_run_sources"
+    __table_args__ = (UniqueConstraint("daily_run_id", "provider", "source_id", name="uq_int_daily_source"),)
+
+    id = Column(String(32), primary_key=True, default=new_id)
+    daily_run_id = Column(String(32), ForeignKey("int_daily_runs.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String(40), nullable=False)
+    source_id = Column(String(255), nullable=False)
+    job_id = Column(String(32), ForeignKey("int_collection_jobs.id", ondelete="SET NULL"))
+    skipped_reason = Column(String(80), nullable=False, default="")
+
+
+class DigestRevision(Base):
+    __tablename__ = "int_digest_revisions"
+    __table_args__ = (UniqueConstraint("digest_id", "revision", name="uq_int_digest_revision"),)
+
+    id = Column(String(32), primary_key=True, default=new_id)
+    digest_id = Column(String(32), ForeignKey("int_digests.id", ondelete="CASCADE"), nullable=False)
+    revision = Column(Integer, nullable=False)
+    input_hash = Column(String(64), nullable=False)
+    snapshot = Column(JSON, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+
+
+class SavedFilter(Base):
+    __tablename__ = "int_saved_filters"
+    __table_args__ = (UniqueConstraint("workspace_id", "user_id", "name", name="uq_int_saved_filter"),)
+
+    id = Column(String(32), primary_key=True, default=new_id)
+    workspace_id = Column(String(32), ForeignKey("int_workspaces.id"), nullable=False)
+    user_id = Column(String(255), nullable=False)
+    name = Column(String(100), nullable=False)
+    filters = Column(JSON, nullable=False, default=dict)
+    updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class SearchDocument(Base):
+    __tablename__ = "int_search_documents"
+
+    article_id = Column(String(255), ForeignKey("articles.id", ondelete="CASCADE"), primary_key=True)
+    search_text = Column(Text, nullable=False)
+    updated_at = Column(DateTime, nullable=False, default=utcnow)
+
+
+class ConnectorIdentity(Base):
+    __tablename__ = "int_connector_identities"
+
+    identity_key = Column(String(64), primary_key=True)
+    provider = Column(String(40), nullable=False, index=True)
+    source_id = Column(String(255), nullable=False)
+    external_id = Column(String(512), nullable=False)
+    article_id = Column(String(255), ForeignKey("articles.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+
+
+class ConnectorUsage(Base):
+    __tablename__ = "int_connector_usage"
+    __table_args__ = (Index("ix_int_connector_usage_time", "workspace_id", "provider", "created_at"),)
+
+    id = Column(String(32), primary_key=True, default=new_id)
+    workspace_id = Column(String(32), ForeignKey("int_workspaces.id"), nullable=False)
+    provider = Column(String(40), nullable=False)
+    operation = Column(String(40), nullable=False)
+    idempotency_key = Column(String(180), nullable=False, unique=True)
+    status = Column(String(24), nullable=False, default="reserved")
+    units = Column(Integer, nullable=False, default=1)
+    billable = Column(Boolean, nullable=False, default=False)
+    error_code = Column(String(80), nullable=False, default="")
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+    completed_at = Column(DateTime)

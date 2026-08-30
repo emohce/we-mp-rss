@@ -102,5 +102,12 @@ Updated: 2026-08-25
 | [verify](verify.md)、[handoff](handoff.md) | 既有证据不等于 v3 验收，保留既存改动与当前恢复点 |
 | [当前状态](../../../vibe/specs/PROJECT_STATUS.md) | 指向 revision 6；修正已提交初始化状态 |
 | [运行说明](../../intelligence-hub.md) | 显式标记基础实现尚待补齐的链路 |
+| [DB engine](../../../core/db.py#L28) | 删除连接时建文件/自动补列，显式初始化仅处理 legacy |
+| [models](../../../core/intelligence/models.py#L470) | 独立检查点/运行/预算、日报覆盖/修订、过滤/搜索与来源用量表 |
+| [migration](../../../core/intelligence/migration.py#L18)、[CLI](../../../tools/intelligence_schema.py#L1) | 严格 schema/version 检查与离线版本 SQL |
+| [baseline](../../../migrations/intelligence/versions/int_v2_20260824.py#L1)、[delta](../../../migrations/intelligence/versions/int_v3_20260830.py#L1)、[env](../../../migrations/intelligence/env.py#L1) | 冻结版本定义；环境拒绝在线迁移 |
+| [migration tests](../../../core/intelligence/test_migration.py#L1)、[job startup](../../../jobs/intelligence.py#L1) | 离线/就绪/启动回归和旧 schema 拒绝启动 |
+| [DB package](../../../vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/plan.md) | plan/sql/verify 人工执行、恢复与发布门禁 |
+| [DB inventory](../../../vibe/ai-db/project-memory/schema_inventory.md)、[technical details](../../../vibe/knowledge/technical-details.md) | 同步新版本、启动事实及其路由/交接说明 |
 
 未实施：真实数据库迁移、账号登录、收费调用、运行服务、部署、推送及全局规则修改。

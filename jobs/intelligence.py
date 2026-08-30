@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import inspect
-
 from core.config import cfg
 from core.db import DB
 from core.intelligence.events import MqttPublisher, NullPublisher, RedisCoordinator
 from core.intelligence.collector import CollectionWorker
 from core.intelligence.jobs import JobRepository
+from core.intelligence.migration import inspect_schema
 from core.intelligence.outbox import OutboxDispatcher, OutboxRepository
 from core.intelligence.providers import WeMpRssCollectorAdapter
 from core.intelligence.rate_limit import RateLimitRepository
@@ -76,19 +75,8 @@ def start_intelligence_jobs() -> bool:
     if settings_issues:
         print_warning("智能聚合任务未启动：" + "；".join(settings_issues))
         return False
-    required_tables = {
-        "int_workspaces",
-        "int_workspace_memberships",
-        "int_collection_jobs",
-        "int_workflow_jobs",
-        "int_outbox_events",
-    }
-    available_tables = set(inspect(DB.get_engine()).get_table_names())
-    missing = sorted(required_tables - available_tables)
-    if missing:
-        print_warning(
-            "智能聚合任务未启动：请先执行 v2 数据库迁移，缺少表 " + ", ".join(missing)
-        )
+    if not inspect_schema(DB.get_engine(), require_revision=True).ready:
+        print_warning("智能聚合任务未启动：schema/约束/版本不匹配，请先完成人工迁移核验")
         return False
 
     collector_enabled = bool(cfg.get("intelligence.collector_enabled", False))

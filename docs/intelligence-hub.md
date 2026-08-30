@@ -147,6 +147,17 @@ Feed、摘要和导出默认只读已经持久化的可见文章，不得隐式�
 
 ## 迁移和验收边界
 
+V3 使用冻结的 Alembic 版本链 `int_v2_20260824 → int_v3_20260830`。连接初始化不再自动补列；显式
+旧版初始化仅建 legacy 表，不能代替 intelligence 迁移。Worker 检查结构、唯一性与已应用版本。
+普通非唯一索引缺失只作为性能提示。SQLite 检查使用只读文件模式，不会创建缺失数据库文件。
+详见 [v3 数据库交接](../vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/sql.md)。
+
+离线版本迁移 SQL（仅生成；新 schema 用 base，已核验 v2 用 `--from-revision int_v2_20260824`）：
+
+```bash
+python tools/intelligence_schema.py upgrade-sql --dialect postgresql
+```
+
 只读检查现有数据库：
 
 ```bash

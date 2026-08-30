@@ -26,20 +26,9 @@ class Db:
     def get_session_factory(self):
         return sessionmaker(bind=self.engine, autoflush=True, expire_on_commit=True, future=True)
     def init(self, con_str: str) -> None:
-        """Initialize database connection and create tables"""
+        """Configure a lazy engine. Schema changes require explicit initialization/migration."""
         try:
             self.connection_str=con_str
-            # 检查SQLite数据库文件是否存在
-            if con_str.startswith('sqlite:///'):
-                import os
-                db_path = con_str[10:]  # 去掉'sqlite:///'前缀
-                if not os.path.exists(db_path):
-                    try:
-                        os.makedirs(os.path.dirname(db_path), exist_ok=True)
-                    except Exception as e:
-                        pass
-                    open(db_path, 'w').close()
-            
             # SQLite 连接参数
             connect_args = {}
             if con_str.startswith('sqlite'):
@@ -80,48 +69,27 @@ class Db:
                     dbapi_conn.text_factory = lambda x: x.decode('utf-8', errors='replace')
             
             self.session_factory=self.get_session_factory()
-            self.ensure_article_columns()
         except Exception as e:
             print(f"Error creating database connection: {e}")
             raise
     def ensure_article_columns(self):
-        """Ensure required columns exist for legacy articles tables."""
-        try:
-            inspector = inspect(self.engine)
-            if "articles" not in inspector.get_table_names(): # type: ignore
-                return
-
-            columns = {column["name"] for column in inspector.get_columns("articles")} # type: ignore
-            alter_statements = []
-            if "is_favorite" not in columns:
-                alter_statements.append("ALTER TABLE articles ADD COLUMN is_favorite INTEGER DEFAULT 0")
-
-            if "has_content" not in columns:
-                alter_statements.append("ALTER TABLE articles ADD COLUMN has_content INTEGER DEFAULT 0")
-
-            if "fetch_started_at" not in columns:
-                alter_statements.append("ALTER TABLE articles ADD COLUMN fetch_started_at BIGINT")
-
-            if not alter_statements:
-                return
-
-            with self.engine.begin() as conn: # type: ignore
-                for stmt in alter_statements:
-                    conn.execute(text(stmt))
-
-            print_info(f"[{self.tag}] 文章表结构已自动更新: {', '.join(alter_statements)}")
-        except Exception as e:
-            print_warning(f"[{self.tag}] 检查/更新 articles 表结构失败: {e}")
+        """Compatibility probe only; never repair schema during connection setup."""
+        inspector = inspect(self.engine)
+        if "articles" not in inspector.get_table_names():
+            return ["articles"]
+        columns = {column["name"] for column in inspector.get_columns("articles")}
+        return sorted({"is_favorite", "has_content", "fetch_started_at"} - columns)
     def create_tables(self):
-        """Create all tables defined in models"""
+        """Explicit legacy initializer; intelligence schema is owned by Alembic."""
         from core.models.base import Base as B # 导入所有模型
-        # Import v2 models lazily to avoid a package initialization cycle while
-        # still registering their ``int_`` tables on the shared metadata.
-        import core.intelligence.models  # noqa: F401
         try:
-            B.metadata.create_all(self.engine)
+            if self.engine.dialect.name == "sqlite" and self.engine.url.database not in (None, "", ":memory:"):
+                from pathlib import Path
+                Path(self.engine.url.database).parent.mkdir(parents=True, exist_ok=True)
+            B.metadata.create_all(self.engine, tables=[t for t in B.metadata.sorted_tables if not t.name.startswith("int_")])
         except Exception as e:
             print_error(f"Error creating tables: {e}")
+            raise
 
         print('All Tables Created Successfully!')    
         

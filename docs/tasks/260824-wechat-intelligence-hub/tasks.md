@@ -26,8 +26,8 @@ Documentation level: `controlled`
 | WU-8 Legacy documentation migration | 1 | 1 | main | app-root | accepted | donor/current source matrix, index, link and statement checks pass | runtime gaps remain explicit | keep core docs canonical |
 | WU-9 CodeNote + AI-DB initialization | 1 | 1 | main | app-root | accepted | project audit OK; resolver 2/2; catalog tests 14/14; AI-DB 15/15 populated | live DB/runtime excluded | keep staging inspection and mutation gates explicit |
 | WU-10 Correctness plan | 1 | 1 | main | app-root | accepted | RAW-006, exact manifest, code-link/diff checks | none | local commit then WU-11 |
-| WU-11 Versioned schema | 1 | 1 | main | app-root | pending | existing metadata/startup inspected | live mutation excluded | frozen revisions and offline tests |
-| WU-12 Fresh collection | 1 | 1 | main | app-root | pending | perpetual cursor and Lite budget gaps | none | isolate poll/backfill checkpoints |
+| WU-11 Versioned schema | 1 | 1 | main | app-root | accepted | 43 focused tests; frozen offline SQL, no startup DDL | live mutation excluded | local schema batch and DBA handoff |
+| WU-12 Fresh collection | 1 | 1 | main | app-root | implementing | independent checkpoint/run schema ready | none | isolate poll/backfill checkpoints |
 | WU-13 Digest reconciliation | 1 | 1 | main | app-root | pending | schedule lacks source barrier and revision | none | daily run and late tests |
 | WU-14 Unified preference/content | 1 | 1 | main | app-root | pending | list/digest ranking and content path differ | none | common ranking and local export |
 | WU-15 Floating workspace | 1 | 1 | main | app-root | pending | nested reader and implicit admin import | browser runtime excluded | one state owner and explicit import |

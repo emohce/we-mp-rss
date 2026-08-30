@@ -26,12 +26,13 @@ Authority
 - v2 profiles: `core/intelligence/settings.py`.
 - v2 models: `core/intelligence/models.py`.
 - schema contract: `core/intelligence/migration.py`.
-- Redis/MQTT/outbox: `core/intelligence/coordination.py`, `core/intelligence/events.py`, `core/intelligence/outbox.py`.
+- Redis/MQTT/outbox: `core/intelligence/events.py`, `core/intelligence/outbox.py`.
 - content objects: `core/intelligence/storage.py`.
 - deployment example: `compose/docker-compose.intelligence.yaml`.
 
 ## Mutation Boundary
 
-- Starting the application with initialization enabled can create files/tables and alter legacy article columns.
+- Engine setup is lazy and performs no compatibility DDL. Explicit legacy initialization can create files/tables;
+  intelligence schema changes use the frozen offline migration chain and remain DBA-gated.
 - Offline DDL rendering does not connect; applying it is a DB mutation.
 - Redis/MQTT connectivity is not DB acceptance and cannot prove durable state correctness.

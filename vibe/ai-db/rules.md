@@ -22,7 +22,8 @@ Tool: tool-neutral (Codex, Claude, Grok, and any CodeNote-routed agent)
 ## Risk Objects
 
 - All legacy application tables and every `int_*` table.
-- `core/db.py` compatibility `ALTER TABLE`, `metadata.create_all()` and SQLite-file creation.
+- Explicit legacy `core/db.py::create_tables()` and frozen intelligence migrations; connection setup no longer
+  runs compatibility `ALTER TABLE` or explicit SQLite-file creation.
 - Files under `migrations/`, `fix_db_now.py`, `fix_user_id.py`, `init_sys.py` and any startup `-init True` path.
 - Tenant/workspace membership, article content/state, feedback/preference, collection cursor/job/rate-limit, digest/share/export, delivery and outbox data.
 - Provider credentials, secret references and content that may contain personal or copyrighted data.

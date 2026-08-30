@@ -42,7 +42,8 @@ Date: 2026-08-25
 ## High-Risk Areas
 
 - `config.yaml`, `.env`, `data/`, cookies, tokens, Access Keys, proxy, webhook and provider credentials.
-- `core/db.py` can create a SQLite file, run `ALTER TABLE` compatibility changes and `metadata.create_all()` during normal application initialization. Starting the app with init enabled is therefore a database-mutation action.
+- `core/db.py` configures a lazy engine without compatibility DDL. Explicit legacy `create_tables()` still mutates
+  files/schema; intelligence migrations are frozen, offline-rendered and DBA-gated. App startup is not a read-only check.
 - `tools/intelligence_schema.py inspect` opens a read-only inspection path by contract; `ddl` renders offline DDL. Neither output is execution approval.
 - Migration scripts, `fix_db_now.py`, `fix_user_id.py`, `init_sys.py`, startup init flags and database repair utilities may mutate data/schema and require a separate user/DBA gate.
 - Live WeChat collection, browser login, proxy switching, SupSub OAuth/purchase/deepread/share, external notification and paid/quota-consuming AI calls require explicit authorization.

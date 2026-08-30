@@ -167,7 +167,10 @@ Documentation level: `controlled`
 - Baseline: `czz-main@d44a41e`, two pre-existing verify/changes hunks preserved and excluded from new commits.
 - WU-10: seven-batch plan, explicit RAW-006 authority, exact file manifest and source-derived impact trace added;
   scoped code-link audit and diff whitespace check passed. No application check was needed for this docs batch.
-- WU-11..16: pending; historical 39-test evidence does not validate freshness, daily coverage or ranking parity.
+- WU-11: 43 focused intelligence tests passed (including four new migration regressions); affected Python
+  compilation passed. Frozen SQLite/PostgreSQL base and v2-delta SQL rendered without a connection. Actual
+  migration remains blocked by the [DBA handoff](../../../vibe/ai-db/ai-db-tasks/260830/0941-intelligence-v3/sql.md).
+- WU-12..16: pending; historical 39-test evidence does not validate freshness, daily coverage or ranking parity.
 - Automatic global router reports an oversized response owner and registry/loading-graph drift. The user permits
   bypassing only that automatic check for this implementation turn; no global rule was changed.
 - Verification route: scoped docs plus isolated intelligence package contracts and affected frontend checks.

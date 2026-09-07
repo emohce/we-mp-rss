@@ -1,13 +1,6 @@
-# We-MP-RSS Claude Adapter
+<!-- codenote-agent-ecosystem:start -->
+# we-mp-rss shared project entry
 
-Tool: tool-neutral (Codex, Claude, Grok, and any CodeNote-routed agent)
-
-Read first:
-
-- [AGENTS.md](AGENTS.md)
-- [vibe/rules/README.md](vibe/rules/README.md)
-- [vibe/rules/documentation.md](vibe/rules/documentation.md) for Standard/Controlled, DB/data, deploy-gated, business-changing, or documentation-heavy work
-- [vibe/specs/PROJECT_STATUS.md](vibe/specs/PROJECT_STATUS.md) for current or overlapping work
-- [vibe/ai-db/README.md](vibe/ai-db/README.md) before database or SQL work
-
-This file is a discovery router, not a second rule owner. Preserve unrelated changes; never store credentials or execute database mutations. Report verification, memory routing and process-document status at closeout.
+Load [AGENTS.md](AGENTS.md) once; it selects the local or portable core and the project owner. No independent reply, title or preflight protocol lives here.
+<!-- projection-sha256: 70a6e24f7b085d7ac3fb086d77c0015c9e606c489282e47f84bc38abe38e1431 -->
+<!-- codenote-agent-ecosystem:end -->

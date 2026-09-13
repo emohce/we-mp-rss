@@ -5,6 +5,8 @@ Date: 2026-08-25
 
 ## Purpose
 
+Consolidation follows [Single Authority And Current Entry](../../../CzzProj/CodeNote/AiRef/VibePractice/Vibe_Rules/process/documentation-impact.md#single-authority-and-current-entry). This adapter keeps only local paths and constraints.
+
 Map CodeNote process/documentation governance onto this repository without copying its algorithms.
 
 ## Authorities

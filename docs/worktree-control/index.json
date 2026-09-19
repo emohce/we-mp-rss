@@ -1,0 +1,165 @@
+{
+  "schema": "worktree-control-observation/v1",
+  "control_branch": "czz-main",
+  "records": [
+    {
+      "task_id": "260830-worktree-integration",
+      "branch": "codex/260830-worktree-integration",
+      "target_branch": "czz-main",
+      "source_owner": "docs/tasks/260824-wechat-intelligence-hub/spec.md",
+      "control_record": "docs/worktree-control/260830-worktree-integration.md",
+      "control_documents": [
+        "vibe/specs/PROJECT_STATUS.md"
+      ],
+      "progress": "head merged into czz-main; ~272 uncommitted changes pending review",
+      "core_plan": "worktree-integration line for wechat-intelligence-hub; residual prototype/requirements-hub draft work",
+      "verification": "unmanaged; no lifecycle receipt; uncommitted diff unverified",
+      "integration": "committed head contained in czz-main; uncommitted portion has no milestone",
+      "next_action": "review uncommitted diff, then adopt into lifecycle or remove checkout keeping the branch",
+      "resume_condition": "owner resolves uncommitted-diff disposition",
+      "retention": "active",
+      "owner_status": "unconfirmed",
+      "observed_at": "2026-09-19T09:53:22.107556Z",
+      "source_documents": [
+        "docs/tasks/260824-wechat-intelligence-hub/spec.md",
+        "docs/tasks/260824-wechat-intelligence-hub/plan.md",
+        "vibe/specs/PROJECT_STATUS.md"
+      ],
+      "cache_refs": [],
+      "observed": {
+        "branch": "codex/260830-worktree-integration",
+        "head": "aee9f4f3268798e22992766582bc6b01bc956c46",
+        "target_head": "c35183efc0acd1e31db4f04ec5c0edd3d18ff533",
+        "worktree": "dirty",
+        "status_digest": "c04017caafffd2d5a02ed030450977c3f5384c53275bd8d50e111a527f2b17f0",
+        "dirty_metadata_digest": "56cf49bdc6a1583f66e1cee15d4c3864fccf1f6d9b8449ff4d7b3f7b89710120",
+        "source_documents": {
+          "docs/tasks/260824-wechat-intelligence-hub/spec.md": "5e27e04b811f6c448965afd506bbf10043d37b401194f33dc045e52d5113451d",
+          "docs/tasks/260824-wechat-intelligence-hub/plan.md": "cbaa560997f41f25ee860cf90fd7246fbaafaf6cdffcd7bed64a4c640c67e796",
+          "vibe/specs/PROJECT_STATUS.md": "fe0fdf60c8025888ef5b1f5b785657e1401190da1e6cbd54bb847117682f64b0"
+        },
+        "control_documents": {
+          "vibe/specs/PROJECT_STATUS.md": "4eba42181f870852925782afbffd316f06cf2f98fed4389d991944a6460dc11f"
+        },
+        "control_record_digest": "0ed399e23ebc8d97fdcd1117d93e7a4b072d08ad10f7ea57ab7b16c5a5daf091",
+        "cache_refs": [],
+        "upstream": null,
+        "upstream_head": null,
+        "remote_observation": "no-upstream",
+        "target_only_commits": 7,
+        "source_only_commits": 0,
+        "lifecycle": {
+          "state": "unknown",
+          "digest": null
+        }
+      },
+      "marker": "427c675af0dae476"
+    },
+    {
+      "task_id": "260908-observatory-rule-delivery",
+      "branch": "codex/260907-rules-we-mp-integration",
+      "target_branch": "czz-main",
+      "source_owner": "vibe/rules/README.md",
+      "control_record": "docs/worktree-control/260908-observatory-rule-delivery.md",
+      "control_documents": [
+        "vibe/specs/PROJECT_STATUS.md"
+      ],
+      "progress": "5 commits ahead of czz-main (87442c0..9cda119); dirty generated-rules cleanup overlaps 73dee44",
+      "core_plan": "observatory/rule-delivery line restoring naming/reply/fidelity rules and syncing compacted rules",
+      "verification": "unmanaged; commit-message claims unverified; overlap with 73dee44/c35183e unreviewed",
+      "integration": "nothing integrated; 5 commits pending review",
+      "next_action": "diff commits and dirty state vs czz-main, then integrate via main gate or discard",
+      "resume_condition": "owner completes overlap review",
+      "retention": "active",
+      "owner_status": "unconfirmed",
+      "observed_at": "2026-09-19T09:53:22.107556Z",
+      "source_documents": [
+        "vibe/rules/README.md",
+        "vibe/specs/PROJECT_STATUS.md",
+        "AGENTS.md"
+      ],
+      "cache_refs": [],
+      "observed": {
+        "branch": "codex/260907-rules-we-mp-integration",
+        "head": "9cda119e789e4301612fdb5d1fa81e52b8030529",
+        "target_head": "c35183efc0acd1e31db4f04ec5c0edd3d18ff533",
+        "worktree": "dirty",
+        "status_digest": "fd14d3dc18b592f4da64d751ebe20d09b9f3eae65d075922ee700b45390ca10c",
+        "dirty_metadata_digest": "f9056d4a6430ecbf331ac5802475506652edee98c01a606a2b250f7a8b4ff188",
+        "source_documents": {
+          "vibe/rules/README.md": "9d564b2964535ff4fdfa314aa84977a6ca67172252e54999190c5337f084e108",
+          "vibe/specs/PROJECT_STATUS.md": "3e611e4f9f0bb09ca91bc0556fbce80149508c075d9ed7230eb2e07f64230b94",
+          "AGENTS.md": "6c9711376838fb3e80ee590feb2e34ec77fb794a55af31e2f3189f1d852c5868"
+        },
+        "control_documents": {
+          "vibe/specs/PROJECT_STATUS.md": "4eba42181f870852925782afbffd316f06cf2f98fed4389d991944a6460dc11f"
+        },
+        "control_record_digest": "95a1be440e871429b5920d0abbc61bf503c34712390f860ea91eb1bea60665e6",
+        "cache_refs": [],
+        "upstream": null,
+        "upstream_head": null,
+        "remote_observation": "no-upstream",
+        "target_only_commits": 7,
+        "source_only_commits": 5,
+        "lifecycle": {
+          "state": "unknown",
+          "digest": null
+        }
+      },
+      "marker": "f00c7ce6d46f4b95"
+    },
+    {
+      "task_id": "media-subscription-redesign-eba67f",
+      "branch": "claude/media-subscription-redesign-eba67f",
+      "target_branch": "czz-main",
+      "source_owner": "vibe/rules/README.md",
+      "control_record": "docs/worktree-control/media-subscription-redesign-eba67f.md",
+      "control_documents": [
+        "vibe/specs/PROJECT_STATUS.md"
+      ],
+      "progress": "22 commits ahead of czz-main incl. spec-revision-9 merge 1229921; dirty generated-rules cleanup",
+      "core_plan": "media-subscription redesign line; preference-ledger RAW-014 and rebuilt frontend assets",
+      "verification": "unmanaged; walkthrough/build claims in commit messages unverified by main task",
+      "integration": "nothing integrated; 22 commits pending review",
+      "next_action": "review commit range and dirty diff vs czz-main, then main-gate integration or discard",
+      "resume_condition": "owner completes review",
+      "retention": "active",
+      "owner_status": "unconfirmed",
+      "observed_at": "2026-09-19T09:53:22.107556Z",
+      "source_documents": [
+        "vibe/rules/README.md",
+        "vibe/specs/PROJECT_STATUS.md",
+        "docs/tasks/260824-wechat-intelligence-hub/spec.md"
+      ],
+      "cache_refs": [],
+      "observed": {
+        "branch": "claude/media-subscription-redesign-eba67f",
+        "head": "192b60866aa93f6f981176dabceae4f774f14885",
+        "target_head": "c35183efc0acd1e31db4f04ec5c0edd3d18ff533",
+        "worktree": "dirty",
+        "status_digest": "6e34a08c89783b1d745a8f3a91467b44aaf4f1c851770fabaed761fa75313ac3",
+        "dirty_metadata_digest": "e5335cc5f3e32d5f767bcd4f27b4459230edacd62f322112d75154cbf063998e",
+        "source_documents": {
+          "vibe/rules/README.md": "9d564b2964535ff4fdfa314aa84977a6ca67172252e54999190c5337f084e108",
+          "vibe/specs/PROJECT_STATUS.md": "04f8441c0729946c8aac1ef22deb6fb434cf463b27188b3197eef0d54761aeab",
+          "docs/tasks/260824-wechat-intelligence-hub/spec.md": "9a7786f7493f71b2c565204da5881bde4143ff4505debe4baebb7f616a91705a"
+        },
+        "control_documents": {
+          "vibe/specs/PROJECT_STATUS.md": "4eba42181f870852925782afbffd316f06cf2f98fed4389d991944a6460dc11f"
+        },
+        "control_record_digest": "c22d16bcc2865490964081db99bf9d07f89ac6b34d226c0a359130e5ce0d700d",
+        "cache_refs": [],
+        "upstream": null,
+        "upstream_head": null,
+        "remote_observation": "no-upstream",
+        "target_only_commits": 7,
+        "source_only_commits": 22,
+        "lifecycle": {
+          "state": "unknown",
+          "digest": null
+        }
+      },
+      "marker": "5928ecded5990966"
+    }
+  ]
+}

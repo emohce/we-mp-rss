@@ -33,6 +33,16 @@ Compact project-current router. Durable product requirements and execution evide
 | SupSub adapter canary | `deferred-by-scope` | [research](../../docs/research/supsub-integration.md) | public evidence + generic format/CLI-envelope tests | actual supplier fixture/account and explicit external-action gate |
 | CodeNote + AI-DB initialization | `committed-local / static-verified` | this hub + [AI-DB](../ai-db/README.md) | historical project/link/JSON/static audit | no live DB/runtime acceptance |
 
+## Worktree Index
+
+Declared worktree index: [WORKTREE_TASKS.md](../../WORKTREE_TASKS.md) with bounded observation ledger [docs/worktree-control/index.json](../../docs/worktree-control/index.json). All three linked worktrees were link-repaired and migrated under `.Worktrees/{lane}/` on 2026-09-19; all are `unmanaged` (no lifecycle receipts) with unconfirmed owners.
+
+| Worktree | Branch | Head | State | Next action |
+| --- | --- | --- | --- | --- |
+| `.Worktrees/codex/260830-worktree-integration` | `codex/260830-worktree-integration` | `aee9f4f` (merged in `czz-main`) | unmanaged, dirty (~272 uncommitted) | review uncommitted diff → adopt or 清理 |
+| `.Worktrees/codex/260908-observatory-rule-delivery` | `codex/260907-rules-we-mp-integration` | `9cda119` (5 commits ahead) | unmanaged, dirty | overlap review vs `czz-main` → integrate or 清理 |
+| `.Worktrees/claude/media-subscription-redesign-eba67f` | `claude/media-subscription-redesign-eba67f` | `192b608` (22 commits ahead) | unmanaged, dirty | review commit range → integrate or 清理 |
+
 ## Verification State
 
 - Latest v3 evidence: 91 backend tests with pre-import I/O guards (zero attempts/legacy runtime imports), 10 UI

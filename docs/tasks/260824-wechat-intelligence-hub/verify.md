@@ -43,7 +43,8 @@ Documentation level: `controlled`
 
 - `.venv/bin/python -m unittest discover -s core/intelligence -t . -p 'test_*.py' -v`:
   39 tests passed in 0.425 seconds.
-- `.venv/bin/python -m compileall -q ...`: all task-owned Python paths compiled.
+- `.venv/bin/python -m compileall -q ...`: all task-owned Python paths compiled. After the pre-existing repairs
+  recorded below, repository-wide `compileall` also exits 0.
 - `tools/intelligence_schema.py ddl`: SQLite, PostgreSQL and MySQL each rendered 460 lines without connecting
   to a database.
 - `docker compose ... config --no-env-resolution --quiet`: Distributed profile parsed successfully with a
@@ -102,7 +103,8 @@ Documentation level: `controlled`
   pre-existing untracked Skill. A generator run briefly projected that foreign Skill; the generated hunk was
   inspected, discarded and the manifest restored to its exact pre-task content.
 - Scoped `git diff --check`, sensitive-pattern and task-path checks are required at final staging. The unrelated
-  concurrent `tools/fix_db.py` change is not owned, modified, staged or accepted by WU-9.
+  concurrent `tools/fix_db.py` change is not owned, modified, staged or accepted by WU-9; it was repaired and
+  committed separately as `44198c3`.
 - No application process, SQLite/PostgreSQL connection, Redis, MQTT, provider, migration, DDL, DML, credential,
   deployment or push action ran. AI-DB evidence is `code + document + prior disposable tests`, never live DB proof.
 
@@ -124,10 +126,18 @@ Documentation level: `controlled`
 - `core/db.py` now classifies the complete SQLite scheme family for engine options and PRAGMAs while retaining the narrower file-creation check.
 - Durable prevention record: [SQLite URL pool routing](../../knowledge/error-memory/sqlite-memory-pool-routing.md).
 
-## Pre-existing Verification Boundary
+## Pre-existing Compile Boundary Resolution
 
-- Repository-wide `compileall` still encounters the pre-existing unterminated string in `tools/fix_db.py`; the file is unchanged by this task.
-- Acceptance compiles every task-owned Python file explicitly and keeps repair of the unrelated legacy utility out of scope.
+- The boundary previously recorded here—repository-wide `compileall` failing on `tools/fix_db.py`—is resolved. Three
+  upstream-inherited syntax defects were repaired outside WU-1..WU-9 scope: a spliced `validate_table_name` whose
+  regex lost its `$` anchor and whose body was interrupted by a 118-line duplicate block in `tools/fix_db.py`
+  (`44198c3`), an f-string backslash illegal before Python 3.12 in `diagnose_config.py`, and an invalid
+  `engine.dialect.get Inspector` call in `migrations/add_headers_cookies_fields.py` (both `650c635`).
+- Repository-wide `compileall` now exits 0 with zero `SyntaxError`, so acceptance no longer needs the task-scoped
+  compile narrowing.
+- These are pre-existing upstream defects rather than WU-1..WU-9 regressions, and they carry no runtime acceptance.
+  `add_headers_cookies_fields.py` was compile- and `Inspector`-contract-checked on a disposable in-memory engine only;
+  it was never executed, because it contains `ALTER TABLE` under the database mutation gate.
 
 ## Gaps
 

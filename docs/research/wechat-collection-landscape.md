@@ -3,6 +3,7 @@
 Last verified: 2026-08-24
 Legacy document sync verified: 2026-08-25
 Targeted refresh: 2026-08-30（Wechat2RSS/SupSub 公开文档与本地 v3 契约；其他供应商价格未复核）
+提醒与供应商复核：2026-09-29（SupSub 首页；极致了公开站。未登录、未调用受保护接口，未复核 AIDATA 价格）
 
 ## 结论与证据等级
 
@@ -18,6 +19,8 @@ Targeted refresh: 2026-08-30（Wechat2RSS/SupSub 公开文档与本地 v3 契约
   2026-08-24 页面显示普通请求 $0.01、缓存结果 $0.0005；价格会变，部署前必须重新核对。
 - **托管聚合服务确认**：SupSub 提供公众号/网站/X 聚合、RSS/Atom/JSON 输出、OPML 迁移、关注点
   和 CLI；它是独立托管连接器，不是微信官方历史文章 API，也不能作为规避限频的账户池。
+  2026-09-29 首页复核：持续抓取，关注点把高相关内容排在阅读器内；公开页未写邮件、微信或
+  webhook 提醒。详见文末与 [SupSub 核验](supsub-integration.md)。
 - **旧项目源码/文档确认**：`wechat-download-api@043c2f9` 提供扫码授权、公众号搜索/列表、RSS、
   本地增量 Feed、七格式整号导出、图片代理、通知和 MCP；其本地 `czz-main` 的应用 README 未偏离
   `origin/main`。这些事实只证明旧实现存在，不证明当前核心已全部实现或真实运行通过。
@@ -31,8 +34,8 @@ Targeted refresh: 2026-08-30（Wechat2RSS/SupSub 公开文档与本地 v3 契约
 | 用户提供文章 URL | 单篇正文 | 不枚举历史；需防 SSRF | 第一优先级 |
 | 微信官方素材/发布 API | 自有或授权公众号 | 依赖该账号 access token 与当前接口权限，不覆盖任意公众号历史 | 授权账号优先 |
 | `we-mp-rss` 公众号后台采集 | 搜索、列表、正文、RSS | 私有接口会话和风控，无官方稳定额度 | 默认核心，增加持久预算/游标/熔断 |
-| AIDATA/同类付费 API | 分页文章列表和缓存 | 计费、字段与供应商依赖，价格可变 | 可选、允许域名且预算封顶的补采/降级 |
-| SupSub | 托管聚合、Feed/OPML、搜索、关注点、精读 | OAuth/套餐依赖；部分写操作不可逆；Feed/API 细节待 canary | `researched`，首选单向只读连接器，不替代核心 |
+| AIDATA/同类付费 API | 分页文章列表和缓存 | 计费、字段与供应商依赖，价格可变；极致了属同类拉取接口，2026-09-29 已点名，本项目仍未绑定 | 可选、允许域名且预算封顶的补采/降级 |
+| SupSub | 托管聚合、Feed/OPML、搜索、关注点、精读 | OAuth/套餐依赖；部分写操作不可逆；Feed/API 细节待 canary；公开页未写邮件、微信或 webhook 提醒（2026-09-29） | `researched`，首选单向只读连接器，不替代核心 |
 | 微信读书 | 低频发现近期群发文章 | 通常最近约 20 篇、可能延迟、账号风控 | 实验性且默认关闭 |
 
 ## 核验来源
@@ -42,6 +45,7 @@ Targeted refresh: 2026-08-30（Wechat2RSS/SupSub 公开文档与本地 v3 契约
 - 官方授权范围：[已发布内容](https://developers.weixin.qq.com/doc/subscription/api/public/api_freepublish_batchget.html)、[永久素材](https://developers.weixin.qq.com/doc/offiaccount/Asset_Management/Get_materials_list.html)。官方页面在本次自动抓取环境中不可解析，部署时需在公众号后台按实际账号权限复核。
 - 付费接口：[AIDATA 文章列表](https://aidata.vip/zh-cn/api/endpoints/weixin/mp/article/list)。
 - 托管聚合：[SupSub 定价](https://supsub.net/#pricing)、[SupSub CLI](https://github.com/SupSub-AI/supsub-cli)；详细采用决策见 [SupSub 核验](supsub-integration.md)。
+- 2026-09-29 提醒复核：[SupSub 首页](https://supsub.net/)、[极致了首页](https://www.dajiala.com/)、[极致了 API 与会员分账](https://www.dajiala.com/main/interface)、[功能导航](https://www.dajiala.com/main/tweet)。未登录会员监控设置，未发起计费请求。
 - 开源参考：[`cooderl/wewe-rss`](https://github.com/cooderl/wewe-rss)、[`wechat-article-exporter`](https://github.com/wechat-article/wechat-article-exporter/issues/200)、[`wx-kit`](https://github.com/monkeychen/wx-kit/blob/main/AGENTS.md)、[`wechat-mp-article-list`](https://github.com/Alex-giao/wechat-mp-article-list/blob/main/references/backend-workflow.md)。
 - 旧行为来源：[`emohce/wechat-download-api@043c2f9`](https://github.com/emohce/wechat-download-api/tree/043c2f9828401220a00b7b125686b334581745e0)；采用与缺口见[迁移矩阵](../migrations/wechat-download-api.md)。
 
@@ -105,3 +109,23 @@ Targeted refresh: 2026-08-30（Wechat2RSS/SupSub 公开文档与本地 v3 契约
   只保留文档参照与 Feed 格式预览，不启用导入或运行绑定。公开仓库结构不是完整采集器开源证明。
 - SupSub 公开价格仍为基础版 ¥29/月、¥299/年、200 来源/10 关注点；完整边界和未验收项由
   [专项核验](supsub-integration.md)持有。通用充值 API 仍未绑定供应商；无收费/登录/真实采集调用。
+
+## 2026-09-29 提醒与极致了
+
+本次只读公开页面，并对照一个已落地调用方的客户端。未登录、未购买、未调用受保护接口，也未复核
+AIDATA 标价。采用结论不变：SupSub 保持 `researched`；付费 API 仍是可选补采，不替换公众号后台核心。
+
+- **SupSub**：首页写明会持续抓取已订阅来源，并用关注点筛选把高相关内容排到阅读器前面（原文
+  「推到眼前」），同时提供 RSS、Atom、JSON。公开首页没有邮件、微信或 webhook 提醒条目。Feed
+  交给自带提醒的阅读器之后，提醒由那个阅读器发出。完整记录见
+  [SupSub 核验](supsub-integration.md)。
+- **极致了 API**：厂商把 API 与会员写成两套计费。公开目录里的历史列表是
+  `POST /fbmain/monitor/v3/post_history`，正文是 `GET /fbmain/monitor/v3/article_detail`，都是
+  请求后返回。标价在首页插件、移动目录和接口页之间不一致，不能写成固定单价；若接入，以响应里的
+  实际扣费为准。本项目仍未绑定该供应商。
+- **极致了会员与插件**：导航有分钟级监控、公众号关注实时监控和关键词订阅。移动页把「公众号关注」
+  写成可分组查看最新文章。首页飞书插件写明定时采集、写入飞书多维表格，并在完成后自动通知。
+  这次没有打开监控设置，不能把该通知写成每篇更新的微信或邮件提醒。
+- **下游调用对照**：AIHOT 的极致了客户端只提交 `post_history`（`ghid`、key、空 `verifycode`，
+  不含翻页 offset）和 `article_detail`。该客户端没有回调。AIHOT 入库后的飞书内容推送是它自己的
+  开关，发现时已超过 48 小时的文章不推。这不改变本项目的采集核心，也不证明极致了会员的单篇渠道。
